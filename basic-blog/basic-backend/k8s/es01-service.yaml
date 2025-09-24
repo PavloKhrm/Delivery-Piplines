@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: es01
+  namespace: client-a
+spec:
+  selector:
+    app: es01
+  ports:
+  - port: 9200
+    targetPort: 9200
+  type: ClusterIP

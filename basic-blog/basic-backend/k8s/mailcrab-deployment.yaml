@@ -1,0 +1,22 @@
+# k8s/mailcrab-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mailcrab
+  namespace: client-a
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mailcrab
+  template:
+    metadata:
+      labels:
+        app: mailcrab
+    spec:
+      containers:
+      - name: mailcrab
+        image: marlonb/mailcrab:latest
+        ports:
+        - containerPort: 1025
+        - containerPort: 1080
