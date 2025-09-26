@@ -7,30 +7,31 @@ Prototype: Client Management Workflow
 
 
 1. Start a Cluster
-minikube start
-minikube tunnel
+- "minikube start"
+- "minikube tunnel"
+
 
 2. Create a Client
-.\new-client.bat bill (for window)
-./new-client.sh bill (for Mac/Linux)
+ - .\new-client.bat bill (for window)
+ - ./new-client.sh bill (for Mac/Linux)
 
 3. Update a Client
-helm upgrade --install bill .\k8s\charts\client-stack -n client-bill `
-  --set clientId=bill --set baseDomain=demo.local
+ - "helm upgrade --install bill .\k8s\charts\client-stack -n client-bill `
+  --set clientId=bill --set baseDomain=demo.local"
 
 4. Check a Client’s Containers
-kubectl get pods -n client-bill -o jsonpath="{range .items[*]}{.metadata.name}{': '}{range .spec.initContainers[*]}{.name}{' (init) '}{end}{range .spec.containers[*]}{.name}{' '}{end}{'\n'}{end}"
+ - "kubectl get pods -n client-bill -o jsonpath="{range .items[*]}{.metadata.name}{': '}{range .spec.initContainers[*]}{.name}{' (init) '}{end}{range .spec.containers[*]}{.name}{' '}{end}{'\n'}{end}"
 
 5. Stop (Suspend) One Client
-helm upgrade --install bill .\k8s\charts\client-stack -n client-bill `
-  --set clientId=bill --set baseDomain=emitit.local --set suspended=true
+ - "helm upgrade --install bill .\k8s\charts\client-stack -n client-bill `
+  --set clientId=bill --set baseDomain=emitit.local --set suspended=true"
 
 6. Resume One Client
-helm upgrade --install bill .\k8s\charts\client-stack -n client-bill `
-  --set clientId=bill --set baseDomain=emitit.local --set suspended=false
+ - "helm upgrade --install bill .\k8s\charts\client-stack -n client-bill `
+  --set clientId=bill --set baseDomain=emitit.local --set suspended=false"
 
-7. Get Password for phpMyAdmin (username root)
-kubectl -n client-dodo exec deploy/bill-phpmyadmin -- printenv MYSQL_ROOT_PASSWORD
+7. Get Password for phpMyAdmin (for all clients, username is 'root')
+ - "kubectl -n client-dodo exec deploy/bill-phpmyadmin -- printenv MYSQL_ROOT_PASSWORD"
 
 📝 Notes
 
