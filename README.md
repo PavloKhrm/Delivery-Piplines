@@ -1,7 +1,11 @@
 Prototype: Client Management Workflow
  Version Control
-Date	Version	Author	Description
-26.09.2025	0.1	Bill	Initial draft: basic workflow with Minikube, client create/update/suspend/resume.
+
+| Date       | Version | Author | Description                                                                       |
+| ---------- | ------- | ------ | --------------------------------------------------------------------------------- |
+| 26.09.2025 | 0.1     | Bill   | Initial draft: basic workflow with Minikube, client create/update/suspend/resume. |
+| (add next) | 0.2     | (name) | (write changes here, e.g. added monitoring steps).                                |
+
 
 1. Start a Cluster
 minikube start
