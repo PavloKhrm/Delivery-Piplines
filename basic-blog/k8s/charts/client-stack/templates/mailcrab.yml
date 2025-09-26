@@ -1,0 +1,68 @@
+{{- $mail := (.Values.mailcrab | default (dict "enabled" false "uiHostPrefix" "mail")) }}
+{{- $res := (get .Values.resources "mailcrab" | default dict) }}
+{{- if $mail.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-mailcrab-ui
+spec:
+  ports:
+    - name: http
+      port: 1080
+      targetPort: 1080
+  selector:
+    app: {{ .Release.Name }}-mailcrab
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-mailcrab-smtp
+spec:
+  ports:
+    - name: smtp
+      port: 1025
+      targetPort: 1025
+  selector:
+    app: {{ .Release.Name }}-mailcrab
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-mailcrab
+spec:
+  replicas: {{ if .Values.suspended }}0{{ else }}1{{ end }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-mailcrab
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-mailcrab
+    spec:
+      containers:
+        - name: mailcrab
+          image: marlonb/mailcrab:latest
+          ports:
+            - containerPort: 1080
+            - containerPort: 1025
+          resources:
+{{- toYaml $res | nindent 12 }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Release.Name }}-mailcrab
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: {{ $mail.uiHostPrefix }}.{{ .Values.clientId }}.{{ .Values.baseDomain }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Release.Name }}-mailcrab-ui
+                port:
+                  number: 1080
+{{- end }}

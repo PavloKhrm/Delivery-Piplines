@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-website
+spec:
+  ports:
+    - { port: 80, targetPort: {{ .Values.website.port }} }
+  selector:
+    app: {{ .Release.Name }}-website
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-website
+spec:
+  replicas: {{ if .Values.suspended }}0{{ else }}1{{ end }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-website
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-website
+    spec:
+      containers:
+        - name: website
+          image: {{ .Values.website.image }}
+          ports: [ { containerPort: {{ .Values.website.port }} } ]
+          envFrom:
+            - secretRef: { name: {{ .Release.Name }}-secrets }
+          volumeMounts:
+            - { name: envfile, mountPath: /app }
+          resources:
+{{- toYaml .Values.resources.website | nindent 12 }}
+      volumes:
+        - name: envfile
+          secret:
+            secretName: {{ .Release.Name }}-envfile
+            items:
+              - { key: .env, path: .env }
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Release.Name }}-website
+  annotations:
+    kubernetes.io/ingress.class: traefik
+spec:
+  rules:
+    - host: {{ .Values.clientId }}.{{ .Values.baseDomain }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service: { name: {{ .Release.Name }}-website, port: { number: 80 } }
