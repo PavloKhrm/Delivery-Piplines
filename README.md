@@ -6,12 +6,12 @@ Prototype: Client Management Workflow
 | 26.09.2025 | 0.1     | Bill   | Initial draft: basic workflow with Minikube, client create/update/suspend/resume. |
 
 
-1. Start a Cluster
+1. Start a Cluster (open admin terminal on path "\Delivery-Piplines\basic-blog>")
 - "minikube start"
 - "minikube tunnel"
+- **Keep it run while opening the second terminal used to manage clients**
 
-
-2. Create a Client
+2. Create a Client (open the second admin terminal on path "\Delivery-Piplines\basic-blog>")
  - .\new-client.bat bill (for window)
  - ./new-client.sh bill (for Mac/Linux)
 
