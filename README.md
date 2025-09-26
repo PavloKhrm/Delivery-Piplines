@@ -11,29 +11,26 @@ minikube start
 minikube tunnel
 
 2. Create a Client
-# Windows
-.\new-client.bat dodo
-
-# Mac/Linux
-./new-client.sh dodo
+.\new-client.bat bill (for window)
+./new-client.sh bill (for Mac/Linux)
 
 3. Update a Client
-helm upgrade --install pasha .\k8s\charts\client-stack -n client-pasha `
-  --set clientId=pasha --set baseDomain=demo.local
+helm upgrade --install bill .\k8s\charts\client-stack -n client-bill `
+  --set clientId=bill --set baseDomain=demo.local
 
 4. Check a Client’s Containers
-kubectl get pods -n client-ana -o jsonpath="{range .items[*]}{.metadata.name}{': '}{range .spec.initContainers[*]}{.name}{' (init) '}{end}{range .spec.containers[*]}{.name}{' '}{end}{'\n'}{end}"
+kubectl get pods -n client-bill -o jsonpath="{range .items[*]}{.metadata.name}{': '}{range .spec.initContainers[*]}{.name}{' (init) '}{end}{range .spec.containers[*]}{.name}{' '}{end}{'\n'}{end}"
 
 5. Stop (Suspend) One Client
-helm upgrade --install ana .\k8s\charts\client-stack -n client-ana `
-  --set clientId=ana --set baseDomain=emitit.local --set suspended=true
+helm upgrade --install bill .\k8s\charts\client-stack -n client-bill `
+  --set clientId=bill --set baseDomain=emitit.local --set suspended=true
 
 6. Resume One Client
-helm upgrade --install do .\k8s\charts\client-stack -n client-do `
-  --set clientId=do --set baseDomain=emitit.local --set suspended=false
+helm upgrade --install bill .\k8s\charts\client-stack -n client-bill `
+  --set clientId=bill --set baseDomain=emitit.local --set suspended=false
 
 7. Get Password for phpMyAdmin (username root)
-kubectl -n client-dodo exec deploy/dodo-phpmyadmin -- printenv MYSQL_ROOT_PASSWORD
+kubectl -n client-dodo exec deploy/bill-phpmyadmin -- printenv MYSQL_ROOT_PASSWORD
 
 📝 Notes
 
