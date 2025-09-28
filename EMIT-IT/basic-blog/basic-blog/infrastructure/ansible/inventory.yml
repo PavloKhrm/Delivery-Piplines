@@ -1,6 +1,20 @@
 all:
-  hosts:
-    acme:
-      ansible_host: 1.2.3.4   # replace with tofu output
-      ansible_user: deploy
-      ansible_ssh_private_key_file: ~/.ssh/your-ci
+  children:
+    k3s_master:
+      hosts:
+        master1:
+          ansible_host: 1.2.3.4   # replace with Tofu output
+          ansible_user: deploy
+          ansible_ssh_private_key_file: ~/.ssh/your-ci
+
+    k3s_agents:
+      hosts:
+        agent1:
+          ansible_host: 1.2.3.5   # replace with Tofu output
+          ansible_user: deploy
+          ansible_ssh_private_key_file: ~/.ssh/your-ci
+
+        agent2:
+          ansible_host: 1.2.3.6   # replace with Tofu output
+          ansible_user: deploy
+          ansible_ssh_private_key_file: ~/.ssh/your-ci

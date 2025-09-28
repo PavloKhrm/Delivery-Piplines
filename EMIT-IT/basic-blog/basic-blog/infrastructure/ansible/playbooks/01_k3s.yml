@@ -1,30 +1,65 @@
 - hosts: all
   become: yes
+  vars:
+    KUBECONFIG_LOCAL: kubeconfig_cluster.yaml
+
   tasks:
     - name: Install dependencies
       apt:
-        name: curl
+        name:
+          - curl
+          - apt-transport-https
+          - ca-certificates
+          - software-properties-common
         state: present
         update_cache: yes
 
-    - name: Install k3s
+- hosts: k3s_master
+  become: yes
+  tasks:
+    - name: Install k3s server
       shell: curl -sfL https://get.k3s.io | sh -
       args:
         creates: /usr/local/bin/k3s
 
-    - name: Wait for k3s to be ready
+    - name: Wait for k3s API to be ready
       shell: k3s kubectl get nodes
       register: result
       retries: 10
       delay: 6
       until: result.rc == 0
 
-    - name: Copy kubeconfig to control machine
+    - name: Fetch kubeconfig from master
       fetch:
         src: /etc/rancher/k3s/k3s.yaml
-        dest: kubeconfig_{{ inventory_hostname }}.yaml
+        dest: kubeconfig_master.yaml
         flat: yes
 
-    - name: Update kubeconfig server IP
+    - name: Replace 127.0.0.1 with master IP in kubeconfig
       local_action: shell |
-        sed -i "s/127.0.0.1/{{ ansible_host }}/g" kubeconfig_{{ inventory_hostname }}.yaml
+        sed -i "s/127.0.0.1/{{ ansible_host }}/g" kubeconfig_master.yaml
+
+    - name: Get K3S_TOKEN from master
+      shell: cat /var/lib/rancher/k3s/server/node-token
+      register: k3s_token
+
+    - name: Save K3S_TOKEN fact
+      set_fact:
+        cluster_token: "{{ k3s_token.stdout }}"
+
+- hosts: k3s_agents
+  become: yes
+  tasks:
+    - name: Install k3s agent
+      shell: |
+        curl -sfL https://get.k3s.io | \
+        K3S_URL=https://{{ hostvars[groups['k3s_master'][0]].ansible_host }}:6443 \
+        K3S_TOKEN={{ hostvars[groups['k3s_master'][0]].cluster_token }} sh -
+      args:
+        creates: /usr/local/bin/k3s-agent
+
+- hosts: localhost
+  tasks:
+    - name: Merge kubeconfig into single file
+      shell: |
+        cp kubeconfig_master.yaml {{ KUBECONFIG_LOCAL }}

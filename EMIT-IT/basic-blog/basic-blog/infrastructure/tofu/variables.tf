@@ -25,3 +25,9 @@ variable "location" {
   type        = string
   default     = "fsn1"
 }
+
+variable "agent_count" {
+  description = "Number of agent nodes to provision for the k3s cluster"
+  type        = number
+  default     = 2
+}
