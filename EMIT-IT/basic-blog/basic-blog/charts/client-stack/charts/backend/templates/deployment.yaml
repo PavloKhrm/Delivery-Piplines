@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: backend
+  name: {{ include "backend.fullname" . }}
 spec:
-  replicas: {{ .Values.replicaCount }}
+  replicas: 1
   selector:
     matchLabels:
       app: backend
@@ -15,33 +15,21 @@ spec:
       containers:
         - name: backend
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          env:
+            {{- range $key, $value := .Values.env }}
+            - name: {{ $key }}
+              value: "{{ $value }}"
+            {{- end }}
           ports:
-            - containerPort: 3000
-          envFrom:
-            - configMapRef:
-                name: backend-config
-            - secretRef:
-                name: backend-secrets
-          readinessProbe:
-            httpGet:
-              path: /
-              port: 3000
-            initialDelaySeconds: 10
-            periodSeconds: 5
-          livenessProbe:
-            httpGet:
-              path: /
-              port: 3000
-            initialDelaySeconds: 20
-            periodSeconds: 10
+            - containerPort: {{ .Values.env.APP_PORT | int }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: backend
 spec:
+  ports:
+    - port: {{ .Values.env.APP_PORT | int }}
+      targetPort: {{ .Values.env.APP_PORT | int }}
   selector:
     app: backend
-  ports:
-    - port: 3000
-      targetPort: 3000

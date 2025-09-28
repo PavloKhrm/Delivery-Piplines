@@ -1,3 +1,6 @@
 image:
   repository: your-docker-user/basic-frontend
   tag: latest
+
+service:
+  port: 80

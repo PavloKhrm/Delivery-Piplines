@@ -1,14 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: frontend
+  name: {{ include "frontend.fullname" . }}
   labels:
     app: frontend
 spec:
   type: ClusterIP
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.port }}
   selector:
     app: frontend
-  ports:
-    - name: http
-      port: 80
-      targetPort: 80

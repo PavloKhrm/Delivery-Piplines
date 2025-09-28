@@ -1,7 +1,9 @@
 apiVersion: v2
 name: client-stack
-version: 0.1.0
+description: Client stack (backend, frontend, DB, cache, search)
 type: application
+version: 0.1.0
+appVersion: "1.0"
 
 dependencies:
   - name: mysql
@@ -13,7 +15,6 @@ dependencies:
   - name: opensearch
     version: 2.20.0
     repository: https://opensearch-project.github.io/helm-charts/
-  # local subcharts
   - name: backend
     version: 0.1.0
     repository: "file://charts/backend"

@@ -1,13 +1,17 @@
 ---
 - hosts: all
   vars:
-    KUBECONFIG_LOCAL: kubeconfig_{{ inventory_hostname }}.yaml
+    KUBECONFIG_LOCAL: kubeconfig_{{ inventory_hostname | default('localhost') }}.yaml
+    CHART_PATH: "{{ playbook_dir }}/../../charts/client-stack"
+
   tasks:
     - name: Add Helm repos
-      local_action: shell |
-        helm repo add bitnami https://charts.bitnami.com/bitnami
-        helm repo add opensearch https://opensearch-project.github.io/helm-charts/
-        helm repo update
+      local_action:
+        module: shell
+        cmd: >
+          helm repo add bitnami https://charts.bitnami.com/bitnami &&
+          helm repo add opensearch https://opensearch-project.github.io/helm-charts/ &&
+          helm repo update
       tags: always
 
     - name: Ensure namespace exists
@@ -22,22 +26,26 @@
       tags: deploy
 
     - name: Deploy client stack (Helm umbrella chart)
-      local_action: shell |
-        helm upgrade --install {{ client_namespace }} ./charts/client-stack \
-        --kubeconfig {{ KUBECONFIG_LOCAL }} \
-        --namespace {{ client_namespace }} \
-        --set global.domain={{ client_domain }} \
-        --set global.clientName={{ client_namespace }} \
-        --set backend.image.tag={{ lookup('env','BACKEND_TAG') | default('latest', true) }} \
-        --set frontend.image.tag={{ lookup('env','FRONTEND_TAG') | default('latest', true) }} \
-        --atomic --wait
+      local_action:
+        module: shell
+        cmd: >
+          helm upgrade --install {{ client_namespace }} ../../charts/client-stack
+          --kubeconfig {{ KUBECONFIG_LOCAL }}
+          --namespace {{ client_namespace }}
+          --set global.domain={{ client_domain }}
+          --set global.clientName={{ client_namespace }}
+          --set backend.image.tag={{ lookup('env','BACKEND_TAG') | default('latest', true) }}
+          --set frontend.image.tag={{ lookup('env','FRONTEND_TAG') | default('latest', true) }}
+          --atomic --wait
       tags: deploy
 
     - name: Remove Helm release
-      local_action: shell |
-        helm uninstall {{ client_namespace }} \
-        --kubeconfig {{ KUBECONFIG_LOCAL }} \
-        --namespace {{ client_namespace }} || true
+      local_action:
+        module: shell
+        cmd: >
+          helm uninstall {{ client_namespace }}
+          --kubeconfig {{ KUBECONFIG_LOCAL }}
+          --namespace {{ client_namespace }} || true
       tags: destroy
 
     - name: Delete namespace

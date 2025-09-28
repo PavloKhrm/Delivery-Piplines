@@ -1,73 +1,12 @@
-#global:
-#  domain: ""   # e.g. app.acme.com
-#
-#secrets:
-#  mysqlRootPassword: ${DATABASE_PASSWORD}
-#  redisPassword: ${REDIS_PASSWORD}
-#  elasticPassword: ${ELASTIC_PASSWORD}
-#  appSessionSecret: ${APP_SESSION_SECRET}
-#
-#backend:
-#  image:
-#    repository: YOUR_DOCKER_USER/basic-backend
-#    tag: latest
-#  env:
-#    APP_ENV: production
-#    APP_PORT: "3000"
-#    APP_NAME: "Basic Blog"
-#    APP_FRONTEND_URL: "https://{{ .Values.global.domain }}"
-#    DATABASE_HOST: mysql
-#    DATABASE_PORT: "3306"
-#    DATABASE_NAME: appdb
-#    DATABASE_USERNAME: root
-#    DATABASE_PASSWORD: "rootpass"   # override per client
-#    REDIS_HOST: redis-master
-#    REDIS_PASSWORD: "redispw"       # override
-#    ELASTIC_NODE_ENDPOINT: "http://opensearch-cluster-master:9200"
-#    ELASTIC_PASSWORD: "opspw"       # override
-#    APP_SESSION_SECRET: "change-me" # override
-#
-#frontend:
-#  image:
-#    repository: nginx
-#    tag: "alpine"  # we’ll bake files into a custom image; or mount from configmap (simple approach here uses configmap)
-#
-#mysql:
-#  auth:
-#    rootPassword: "rootpass"      # override per client
-#    database: appdb
-#  primary:
-#    persistence:
-#      enabled: true
-#      size: 5Gi
-#
-#redis:
-#  auth:
-#    password: "redispw"           # override per client
-#  master:
-#    persistence:
-#      enabled: true
-#      size: 2Gi
-#  replica:
-#    replicaCount: 0
-#
-#opensearch:
-#  clusterName: client-os
-#  replicas: 1
-#  masterService: "opensearch-cluster"
-#  singleNode: true
-#  persistence:
-#    enabled: true
-#    size: 5Gi
-
 global:
-  domain: ""  # e.g. client1.local or client1.example.com
+  domain: ""  # e.g. app.acme.com
+  clientName: ""  # namespace/identifier
 
 secrets:
-  mysqlRootPassword: ""
-  redisPassword: ""
-  elasticPassword: ""
-  appSessionSecret: ""
+  mysqlRootPassword: "changeme"
+  redisPassword: "changeme"
+  elasticPassword: "changeme"
+  appSessionSecret: "changeme"
 
 backend:
   image:
@@ -75,26 +14,60 @@ backend:
     tag: latest
   env:
     APP_ENV: production
-    APP_NAME: "My Blog"
+    APP_NAME: "Basic Blog"
     APP_PORT: "3000"
     APP_SESSION_COOKIE: "basic-api-session"
     APP_TIMEZONE: "UTC"
     APP_CONTACT_MAIL: "info@emit-it.com"
     APP_CONTACT_WEBSITE: "https://emit-it.com"
 
-    DATABASE_HOST: "mysql"
+    DATABASE_HOST: mysql
     DATABASE_PORT: "3306"
-    DATABASE_USERNAME: "root"
-    DATABASE_NAME: "basic_api_db"
+    DATABASE_NAME: appdb
+    DATABASE_USERNAME: root
+    DATABASE_PASSWORD: "{{ .Values.secrets.mysqlRootPassword }}"
 
-    REDIS_HOST: "redis-master"
+    REDIS_HOST: redis-master
+    REDIS_PASSWORD: "{{ .Values.secrets.redisPassword }}"
     REDIS_CACHE_TTL: "3600000"
     REDIS_KEY_PREFIX: "basic-api:"
 
     ELASTIC_NODE_ENDPOINT: "http://opensearch-cluster-master:9200"
-    ELASTIC_PORT: "9200"
+    ELASTIC_PASSWORD: "{{ .Values.secrets.elasticPassword }}"
+
+    APP_SESSION_SECRET: "{{ .Values.secrets.appSessionSecret }}"
 
 frontend:
   image:
     repository: your-docker-user/basic-frontend
     tag: latest
+  service:
+    port: 80
+
+mysql:
+  auth:
+    rootPassword: "{{ .Values.secrets.mysqlRootPassword }}"
+    database: appdb
+  primary:
+    persistence:
+      enabled: true
+      size: 5Gi
+
+redis:
+  auth:
+    password: "{{ .Values.secrets.redisPassword }}"
+  master:
+    persistence:
+      enabled: true
+      size: 2Gi
+  replica:
+    replicaCount: 0
+
+opensearch:
+  clusterName: client-os
+  replicas: 1
+  masterService: "opensearch-cluster"
+  singleNode: true
+  persistence:
+    enabled: true
+    size: 5Gi

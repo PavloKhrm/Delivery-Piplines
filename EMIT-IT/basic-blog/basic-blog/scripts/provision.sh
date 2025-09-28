@@ -3,7 +3,9 @@ set -e
 
 # --- Load infra secrets ---
 if [ -f "../infrastructure/.env" ]; then
-  export $(grep -v '^#' ../infrastructure/.env | xargs)
+  set -a
+  . ../infrastructure/.env
+  set +a
 fi
 
 CLIENT=$1
@@ -36,9 +38,17 @@ tofu apply -auto-approve \
   -var="hcloud_token=$HCLOUD_TOKEN" \
   -var="ssh_public_key=$(cat $SSH_KEY_PATH)"
 
-# --- Export inventory.yml ---
+# --- Always refresh Ansible inventory ---
+echo "Generating fresh Ansible inventory..."
 tofu output -raw ansible_inventory > ../ansible/inventory.yml
+
+# --- Verify SSH before playbooks ---
 cd ../ansible
+echo "🔑 Testing SSH connectivity..."
+ansible all -i inventory.yml -m ping || {
+  echo "SSH failed! Check your SSH key / firewall."
+  exit 1
+}
 
 # --- Install k3s cluster (multi-node) ---
 ansible-playbook -i inventory.yml playbooks/01_k3s.yml

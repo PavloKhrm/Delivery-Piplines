@@ -1,4 +1,8 @@
-replicaCount: 1
 image:
   repository: your-docker-user/basic-backend
   tag: latest
+
+service:
+  port: 3000
+
+env: {}

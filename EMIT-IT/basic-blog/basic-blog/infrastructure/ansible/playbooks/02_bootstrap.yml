@@ -29,28 +29,37 @@
     # Traefik Ingress Controller
     # -------------------------------
     - name: Install Traefik via Helm
-      local_action: shell |
-        helm upgrade --install traefik traefik/traefik \
-        --kubeconfig {{ KUBECONFIG_LOCAL }} \
-        -n kube-system --create-namespace \
-        --set ports.web.redirectTo=websecure \
-        --set ports.websecure.tls.enabled=true
+      local_action:
+        module: shell
+        cmd: >
+          helm upgrade --install traefik traefik/traefik
+          --kubeconfig {{ KUBECONFIG_LOCAL }}
+          -n kube-system --create-namespace
+          --set ingressRoute.dashboard.enabled=true
+          --set ports.websecure.tls.enabled=true
+          --set service.type=NodePort
+          --set ingressClass.enabled=true
+          --set ingressClass.isDefaultClass=true
 
     # -------------------------------
     # cert-manager
     # -------------------------------
     - name: Install cert-manager CRDs
-      local_action: shell |
-        kubectl --kubeconfig {{ KUBECONFIG_LOCAL }} \
-        apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.4/cert-manager.crds.yaml
+      local_action:
+        module: shell
+        cmd: >
+          kubectl --kubeconfig {{ KUBECONFIG_LOCAL }}
+          apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.4/cert-manager.crds.yaml
 
     - name: Install cert-manager via Helm
-      local_action: shell |
-        helm upgrade --install cert-manager jetstack/cert-manager \
-        --kubeconfig {{ KUBECONFIG_LOCAL }} \
-        -n cert-manager --create-namespace \
-        --version v1.14.4 \
-        --set installCRDs=false
+      local_action:
+        module: shell
+        cmd: >
+          helm upgrade --install cert-manager jetstack/cert-manager
+          --kubeconfig {{ KUBECONFIG_LOCAL }}
+          -n cert-manager --create-namespace
+          --version v1.14.4
+          --set installCRDs=false
 
     # -------------------------------
     # ClusterIssuer (skip in local mode)
@@ -80,11 +89,13 @@
     # Hetzner CSI (only in Hetzner mode)
     # -------------------------------
     - name: Install Hetzner CSI
-      local_action: shell |
-        helm upgrade --install hcloud-csi hcloud/hcloud-csi \
-        --kubeconfig {{ KUBECONFIG_LOCAL }} \
-        -n kube-system --create-namespace \
-        --set secret.token={{ lookup('env', 'HCLOUD_TOKEN') }}
+      local_action:
+        module: shell
+        cmd: >
+          helm upgrade --install hcloud-csi hcloud/hcloud-csi
+          --kubeconfig {{ KUBECONFIG_LOCAL }}
+          -n kube-system --create-namespace
+          --set secret.token={{ lookup('env', 'HCLOUD_TOKEN') }}
       when: mode == "hetzner"
 
     # -------------------------------
