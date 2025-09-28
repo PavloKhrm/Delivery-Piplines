@@ -9,7 +9,7 @@ if [ -z "$CLIENT" ] || [ -z "$DOMAIN" ]; then
   exit 1
 fi
 
-echo "🔄 Updating client: $CLIENT ($DOMAIN)"
+echo "Updating client: $CLIENT ($DOMAIN)"
 
 cd infrastructure/ansible
 ansible-playbook -i inventory.yml playbooks/03_deploy_client.yml \
