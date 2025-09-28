@@ -1,3 +1,4 @@
+---
 - hosts: all
   vars:
     KUBECONFIG_LOCAL: kubeconfig_{{ inventory_hostname }}.yaml
@@ -7,6 +8,7 @@
         helm repo add bitnami https://charts.bitnami.com/bitnami
         helm repo add opensearch https://opensearch-project.github.io/helm-charts/
         helm repo update
+      tags: always
 
     - name: Ensure namespace exists
       kubernetes.core.k8s:
@@ -17,20 +19,34 @@
           kind: Namespace
           metadata:
             name: "{{ client_namespace }}"
+      tags: deploy
 
-    - name: Deploy client stack
+    - name: Deploy client stack (Helm umbrella chart)
       local_action: shell |
         helm upgrade --install {{ client_namespace }} ./charts/client-stack \
         --kubeconfig {{ KUBECONFIG_LOCAL }} \
         --namespace {{ client_namespace }} \
         --set global.domain={{ client_domain }} \
         --set global.clientName={{ client_namespace }} \
-        --set ingress.enabled=true \
-        --set ingress.hosts[0].host={{ client_domain }} \
-        --set ingress.hosts[0].paths[0].path=/ \
-        --set ingress.hosts[0].paths[0].pathType=Prefix \
-        --set ingress.tls[0].hosts[0]={{ client_domain }} \
-        --set ingress.tls[0].secretName={{ client_namespace }}-tls \
         --set backend.image.tag={{ lookup('env','BACKEND_TAG') | default('latest', true) }} \
         --set frontend.image.tag={{ lookup('env','FRONTEND_TAG') | default('latest', true) }} \
         --atomic --wait
+      tags: deploy
+
+    - name: Remove Helm release
+      local_action: shell |
+        helm uninstall {{ client_namespace }} \
+        --kubeconfig {{ KUBECONFIG_LOCAL }} \
+        --namespace {{ client_namespace }} || true
+      tags: destroy
+
+    - name: Delete namespace
+      kubernetes.core.k8s:
+        kubeconfig: "{{ KUBECONFIG_LOCAL }}"
+        state: absent
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: "{{ client_namespace }}"
+      tags: destroy

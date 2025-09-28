@@ -1,17 +1,29 @@
+---
 - hosts: all
   vars:
-    KUBECONFIG_LOCAL: kubeconfig_{{ inventory_hostname }}.yaml
+    KUBECONFIG_LOCAL: kubeconfig_{{ inventory_hostname | default('localhost') }}.yaml
+    # Default is hetzner; override with --extra-vars "mode=local"
+    mode: "hetzner"
 
   tasks:
     # -------------------------------
     # Helm repos
     # -------------------------------
-    - name: Add required Helm repos
-      local_action: shell |
-        helm repo add traefik https://traefik.github.io/charts
-        helm repo add jetstack https://charts.jetstack.io
-        helm repo add hcloud https://charts.hetzner.cloud
-        helm repo update
+    - name: Add Traefik Helm repo
+      local_action: command helm repo add traefik https://traefik.github.io/charts
+      ignore_errors: true
+
+    - name: Add Jetstack Helm repo
+      local_action: command helm repo add jetstack https://charts.jetstack.io
+      ignore_errors: true
+
+    - name: Add Hetzner Helm repo (only in Hetzner mode)
+      local_action: command helm repo add hcloud https://charts.hetzner.cloud
+      when: mode == "hetzner"
+      ignore_errors: true
+
+    - name: Update Helm repos
+      local_action: command helm repo update
 
     # -------------------------------
     # Traefik Ingress Controller
@@ -40,6 +52,9 @@
         --version v1.14.4 \
         --set installCRDs=false
 
+    # -------------------------------
+    # ClusterIssuer (skip in local mode)
+    # -------------------------------
     - name: Create ClusterIssuer (Let’s Encrypt)
       kubernetes.core.k8s:
         kubeconfig: "{{ KUBECONFIG_LOCAL }}"
@@ -59,9 +74,10 @@
                 - http01:
                     ingress:
                       class: traefik
+      when: mode == "hetzner"
 
     # -------------------------------
-    # Hetzner CSI (storage driver)
+    # Hetzner CSI (only in Hetzner mode)
     # -------------------------------
     - name: Install Hetzner CSI
       local_action: shell |
@@ -69,6 +85,7 @@
         --kubeconfig {{ KUBECONFIG_LOCAL }} \
         -n kube-system --create-namespace \
         --set secret.token={{ lookup('env', 'HCLOUD_TOKEN') }}
+      when: mode == "hetzner"
 
     # -------------------------------
     # Client Namespace
