@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>Hetzner Dashboard</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="container">
+    <h1>Hetzner Dashboard</h1>
+
+    <form id="create-form" class="row">
+      <input id="client" class="input" list="client-list" placeholder="client name" required>
+      <datalist id="client-list"></datalist>
+
+      <select id="type" class="input" required>
+        <option value="" disabled selected>Loading server types…</option>
+      </select>
+
+      <select id="loc" class="input" required>
+        <option value="" disabled selected>Loading locations…</option>
+      </select>
+
+      <select id="image" class="input" required>
+        <option value="" disabled selected>Loading images…</option>
+      </select>
+
+      <button class="btn" type="submit">Create</button>
+    </form>
+
+    <div id="spec" class="spec cardish" hidden>
+      <div class="spec__row">
+        <div class="chip"><b id="spec-cores">—</b><span>vCPU</span></div>
+        <div class="chip"><b id="spec-ram">—</b><span>GB RAM</span></div>
+        <div class="chip"><b id="spec-disk">—</b><span>GB Disk</span></div>
+        <div class="chip"><b id="spec-storage">—</b><span>Storage</span></div>
+        <div class="chip"><b id="spec-traffic">—</b><span>TB Traffic</span></div>
+      </div>
+      <div class="price-row">
+        <div class="price">
+          <div class="muted">Hourly</div>
+          <div class="price__num"><span id="spec-hourly">—</span></div>
+        </div>
+        <div class="price">
+          <div class="muted">Monthly</div>
+          <div class="price__num"><span id="spec-monthly">—</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  </header>
+
+  <main class="container">
+    <h3 class="section-title">Servers</h3>
+    <div id="list" class="grid"></div>
+  </main>
+
+  <!-- Карточка сервера -->
+  <template id="card-tpl">
+    <details class="card" data-id="">
+      <summary class="card__summary">
+        <span class="card__title"></span>
+        <span class="badge" data-status=""></span>
+      </summary>
+      <div class="card__content">
+        <div class="kv"><span>ID</span><code class="mono" data-k="id"></code></div>
+        <div class="kv"><span>IP</span><code class="mono" data-k="ip"></code></div>
+        <div class="kv"><span>Client</span><span data-k="client"></span></div>
+        <div class="kv"><span>Location</span><span data-k="location"></span></div>
+        <div class="kv"><span>Type</span><span data-k="typeName"></span></div>
+
+        <div class="spec spec--inline">
+          <div class="chip"><b data-k="cores">—</b><span>vCPU</span></div>
+          <div class="chip"><b data-k="memory_gb">—</b><span>GB RAM</span></div>
+          <div class="chip"><b data-k="disk_gb">—</b><span>GB Disk</span></div>
+          <div class="chip"><b data-k="storage_type">—</b><span>Storage</span></div>
+          <div class="chip"><b data-k="included_traffic_tb">—</b><span>TB Traffic</span></div>
+        </div>
+
+        <div class="price-row">
+          <div class="price">
+            <div class="muted">Hourly</div>
+            <div class="price__num"><span data-k="price_hourly">—</span></div>
+          </div>
+          <div class="price">
+            <div class="muted">Monthly</div>
+            <div class="price__num"><span data-k="price_monthly">—</span></div>
+          </div>
+        </div>
+
+        <div class="kv">
+          <span>Key file</span>
+          <span class="muted truncate" data-k="keyPath" title=""></span>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn--ghost" data-action="show-key">Show key</button>
+          <button class="btn btn--danger" data-action="delete">Delete</button>
+        </div>
+        <pre class="key mono" hidden></pre>
+      </div>
+    </details>
+  </template>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>
