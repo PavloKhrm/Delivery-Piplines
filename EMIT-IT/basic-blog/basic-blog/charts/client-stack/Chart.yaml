@@ -1,0 +1,22 @@
+apiVersion: v2
+name: client-stack
+version: 0.1.0
+type: application
+
+dependencies:
+  - name: mysql
+    version: 9.16.0
+    repository: https://charts.bitnami.com/bitnami
+  - name: redis
+    version: 18.6.0
+    repository: https://charts.bitnami.com/bitnami
+  - name: opensearch
+    version: 2.20.0
+    repository: https://opensearch-project.github.io/helm-charts/
+  # local subcharts
+  - name: backend
+    version: 0.1.0
+    repository: "file://charts/backend"
+  - name: frontend
+    version: 0.1.0
+    repository: "file://charts/frontend"

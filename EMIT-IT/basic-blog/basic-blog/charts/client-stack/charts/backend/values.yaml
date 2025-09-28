@@ -1,0 +1,4 @@
+replicaCount: 1
+image:
+  repository: your-docker-user/basic-backend
+  tag: latest

@@ -1,0 +1,30 @@
+- hosts: all
+  become: yes
+  tasks:
+    - name: Install dependencies
+      apt:
+        name: curl
+        state: present
+        update_cache: yes
+
+    - name: Install k3s
+      shell: curl -sfL https://get.k3s.io | sh -
+      args:
+        creates: /usr/local/bin/k3s
+
+    - name: Wait for k3s to be ready
+      shell: k3s kubectl get nodes
+      register: result
+      retries: 10
+      delay: 6
+      until: result.rc == 0
+
+    - name: Copy kubeconfig to control machine
+      fetch:
+        src: /etc/rancher/k3s/k3s.yaml
+        dest: kubeconfig_{{ inventory_hostname }}.yaml
+        flat: yes
+
+    - name: Update kubeconfig server IP
+      local_action: shell |
+        sed -i "s/127.0.0.1/{{ ansible_host }}/g" kubeconfig_{{ inventory_hostname }}.yaml

@@ -1,0 +1,19 @@
+- hosts: all
+  vars:
+    KUBECONFIG_LOCAL: kubeconfig_{{ inventory_hostname }}.yaml
+  tasks:
+    - name: Add bitnami and opensearch repos
+      local_action: shell |
+        helm repo add bitnami https://charts.bitnami.com/bitnami
+        helm repo add opensearch https://opensearch-project.github.io/helm-charts/
+        helm repo update
+
+    - name: Deploy client stack (Helm umbrella)
+      local_action: shell |
+        helm upgrade --install {{ client_namespace }} ./charts/client-stack \
+        --kubeconfig {{ KUBECONFIG_LOCAL }} \
+        --namespace {{ client_namespace }} \
+        --set global.domain={{ client_domain }} \
+        --set backend.image.tag={{ lookup('env','BACKEND_TAG') | default('latest', true) }} \
+        --set frontend.image.tag={{ lookup('env','FRONTEND_TAG') | default('latest', true) }} \
+        --atomic --wait

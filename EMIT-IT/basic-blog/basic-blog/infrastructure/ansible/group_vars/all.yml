@@ -1,0 +1,4 @@
+k3s_version: v1.30.4+k3s1
+client_namespace: acme
+client_domain: app.acme.com           # the client's domain
+email_lets_encrypt: devops@yourco.com # for cert-manager
