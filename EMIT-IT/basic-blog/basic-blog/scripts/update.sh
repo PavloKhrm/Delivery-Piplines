@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 
+# --- Load infra secrets ---
+if [ -f "../infrastructure/.env" ]; then
+  export $(grep -v '^#' ../infrastructure/.env | xargs)
+fi
+
 CLIENT=$1
 DOMAIN=$2
 
@@ -11,7 +16,7 @@ fi
 
 echo "Updating client: $CLIENT ($DOMAIN)"
 
-cd infrastructure/ansible
+cd ../infrastructure/ansible
 ansible-playbook -i inventory.yml playbooks/03_deploy_client.yml \
   --extra-vars "client_namespace=$CLIENT client_domain=$DOMAIN"
 

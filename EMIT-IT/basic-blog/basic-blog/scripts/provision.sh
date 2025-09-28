@@ -1,9 +1,13 @@
 #!/bin/bash
 set -e
 
+# --- Load infra secrets ---
+if [ -f "../infrastructure/.env" ]; then
+  export $(grep -v '^#' ../infrastructure/.env | xargs)
+fi
+
 CLIENT=$1
 DOMAIN=$2
-EMAIL="admin@example.com" # replace with your ACME email
 
 if [ -z "$CLIENT" ] || [ -z "$DOMAIN" ]; then
   echo "Usage: $0 <client> <domain>"
@@ -14,17 +18,23 @@ echo "Provisioning client: $CLIENT at $DOMAIN"
 
 # --- Check Hetzner token ---
 if [ -z "$HCLOUD_TOKEN" ]; then
-  echo "HCLOUD_TOKEN not set. Run: export HCLOUD_TOKEN=your-token"
+  echo "HCLOUD_TOKEN not set. Add it to infrastructure/.env or export manually"
+  exit 1
+fi
+
+# --- Check SSH key path ---
+if [ ! -f "$SSH_KEY_PATH" ]; then
+  echo "SSH key not found at $SSH_KEY_PATH"
   exit 1
 fi
 
 # --- Terraform (Tofu) ---
-cd infrastructure/tofu
+cd ../infrastructure/tofu
 tofu init -input=false
 tofu apply -auto-approve \
   -var="client=$CLIENT" \
   -var="hcloud_token=$HCLOUD_TOKEN" \
-  -var="ssh_public_key=$(cat ~/.ssh/id_rsa.pub)"
+  -var="ssh_public_key=$(cat $SSH_KEY_PATH)"
 
 # --- Export inventory.yml ---
 tofu output -raw ansible_inventory > ../ansible/inventory.yml
