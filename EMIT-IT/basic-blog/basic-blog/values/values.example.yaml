@@ -1,0 +1,48 @@
+global:
+  domain: <client-domain>       # e.g. client.local
+  clientName: <client-name>     # e.g. client
+
+secrets:
+  mysqlRootPassword: "<mysql-password>"
+  redisPassword: "<redis-password>"
+  elasticPassword: "<elastic-password>"
+  appSessionSecret: "<session-secret>"
+
+backend:
+  fullnameOverride: <client-name>-backend
+  image:
+    repository: <backend-image>
+    tag: <backend-tag>
+  service:
+    port: 3000
+  env:
+    APP_ENV: production
+    APP_NAME: "<App Name>"
+    APP_URL: "https://<client-domain>"
+    APP_FRONTEND_DOMAIN: <client-domain>
+    APP_FRONTEND_URL: "https://<client-domain>"
+    APP_PORT: "3000"
+    APP_SESSION_COOKIE: "<session-cookie-name>"
+    APP_TIMEZONE: UTC
+    APP_CONTACT_MAIL: "<support-email>"
+    APP_CONTACT_WEBSITE: "https://<website>"
+
+    DATABASE_HOST: mysql
+    DATABASE_PORT: "3306"
+    DATABASE_USERNAME: root
+    DATABASE_NAME: <client-db>
+
+    REDIS_HOST: redis-master
+    REDIS_CACHE_TTL: "3600000"
+    REDIS_KEY_PREFIX: "<redis-prefix>"
+
+    ELASTIC_NODE_ENDPOINT: "http://opensearch-cluster-master:9200"
+    ELASTIC_PORT: "9200"
+
+frontend:
+  fullnameOverride: <client-name>-frontend
+  image:
+    repository: <frontend-image>
+    tag: <frontend-tag>
+  service:
+    port: 80

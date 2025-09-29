@@ -1,18 +1,39 @@
-# ---- build ----
+# ---- Build Stage ----
 FROM node:20-alpine AS build
+
+# Install build tools (needed for bcrypt, etc.)
+RUN apk add --no-cache python3 make g++
+
 WORKDIR /app
+
+# Copy dependency manifests
 COPY package*.json ./
-RUN npm ci
+
+# Install dependencies (use npm install for flexibility)
+RUN npm install
+
+# Copy rest of source code
 COPY . .
+
+# Build the NestJS app
 RUN npm run build
 
-# ---- runtime ----
-FROM node:20-alpine
+# ---- Runtime Stage ----
+FROM node:20-alpine AS runtime
+
 WORKDIR /app
-ENV NODE_ENV=production
-# Copy built app + deps
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/dist ./dist
+
+# Copy only dependency manifests and install prod deps
 COPY package*.json ./
+RUN npm install --only=production
+
+# Copy built app from build stage
+COPY --from=build /app/dist ./dist
+
+# Copy any extra files NestJS needs at runtime (optional)
+COPY --from=build /app/node_modules ./node_modules
+
 EXPOSE 3000
+
+# Start backend API
 CMD ["node", "dist/main.js"]

@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "🚀 Bootstrapping local environment..."
+echo "Bootstrapping local environment..."
 
 # Install dependencies if not present
 if ! command -v tofu &> /dev/null; then

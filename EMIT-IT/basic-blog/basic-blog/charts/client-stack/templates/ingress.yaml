@@ -1,11 +1,11 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: app
+  name: {{ include "client-stack.fullname" . }}-ingress
   annotations:
-    kubernetes.io/ingress.class: traefik
     cert-manager.io/cluster-issuer: letsencrypt
 spec:
+  ingressClassName: traefik
   tls:
     - hosts:
         - {{ .Values.global.domain }}
@@ -18,13 +18,20 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: frontend
+                name: {{ include "frontend.fullname" . }}
                 port:
-                  number: 80
+                  number: {{ .Values.frontend.service.port }}
           - path: /api
             pathType: Prefix
             backend:
               service:
-                name: backend
+                name: {{ include "backend.fullname" . }}
                 port:
-                  number: 3000
+                  number: {{ .Values.backend.service.port }}
+          - path: /phpmyadmin
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Release.Name }}-phpmyadmin
+                port:
+                  number: 80

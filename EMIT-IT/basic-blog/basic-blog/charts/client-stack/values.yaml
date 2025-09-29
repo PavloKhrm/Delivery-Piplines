@@ -1,6 +1,6 @@
 global:
-  domain: ""  # e.g. app.acme.com
-  clientName: ""  # namespace/identifier
+  domain: ""          # override per client
+  clientName: ""      # release/namespace name
 
 secrets:
   mysqlRootPassword: "changeme"
@@ -10,43 +10,22 @@ secrets:
 
 backend:
   image:
-    repository: your-docker-user/basic-backend
+    repository: nginx
     tag: latest
-  env:
-    APP_ENV: production
-    APP_NAME: "Basic Blog"
-    APP_PORT: "3000"
-    APP_SESSION_COOKIE: "basic-api-session"
-    APP_TIMEZONE: "UTC"
-    APP_CONTACT_MAIL: "info@emit-it.com"
-    APP_CONTACT_WEBSITE: "https://emit-it.com"
-
-    DATABASE_HOST: mysql
-    DATABASE_PORT: "3306"
-    DATABASE_NAME: appdb
-    DATABASE_USERNAME: root
-    DATABASE_PASSWORD: "{{ .Values.secrets.mysqlRootPassword }}"
-
-    REDIS_HOST: redis-master
-    REDIS_PASSWORD: "{{ .Values.secrets.redisPassword }}"
-    REDIS_CACHE_TTL: "3600000"
-    REDIS_KEY_PREFIX: "basic-api:"
-
-    ELASTIC_NODE_ENDPOINT: "http://opensearch-cluster-master:9200"
-    ELASTIC_PASSWORD: "{{ .Values.secrets.elasticPassword }}"
-
-    APP_SESSION_SECRET: "{{ .Values.secrets.appSessionSecret }}"
+  service:
+    port: 3000
+  env: {}
 
 frontend:
   image:
-    repository: your-docker-user/basic-frontend
-    tag: latest
+    repository: nginx
+    tag: alpine
   service:
     port: 80
 
 mysql:
   auth:
-    rootPassword: "{{ .Values.secrets.mysqlRootPassword }}"
+    rootPassword: changeme
     database: appdb
   primary:
     persistence:
@@ -55,7 +34,7 @@ mysql:
 
 redis:
   auth:
-    password: "{{ .Values.secrets.redisPassword }}"
+    password: changeme
   master:
     persistence:
       enabled: true
@@ -66,8 +45,26 @@ redis:
 opensearch:
   clusterName: client-os
   replicas: 1
-  masterService: "opensearch-cluster"
+  minimumMasterNodes: 1
   singleNode: true
   persistence:
     enabled: true
     size: 5Gi
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+
+phpmyadmin:
+  enabled: true
+  db:
+    host: mysql
+    port: 3306
+    user: root
+    password: changeme
+  service:
+    type: ClusterIP
+    port: 80

@@ -14,5 +14,8 @@ dependencies:
 - name: frontend
   repository: file://charts/frontend
   version: 0.1.0
-digest: sha256:aa3e2739665165cb941b6d4a848aa09f2c2ed51efa23a8a97fbaa3176a1834c7
-generated: "2025-09-24T21:30:03.1144982+02:00"
+- name: phpmyadmin
+  repository: https://charts.bitnami.com/bitnami
+  version: 10.3.0
+digest: sha256:e5072ce2492ccaddfd993967c51c752b541956c38101289ac5d14e6660bfb5a6
+generated: "2025-09-29T00:10:08.190984856+02:00"

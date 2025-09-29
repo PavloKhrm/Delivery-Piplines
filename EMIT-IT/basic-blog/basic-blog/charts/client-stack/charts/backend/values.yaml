@@ -1,8 +1,8 @@
 image:
-  repository: your-docker-user/basic-backend
-  tag: latest
+  repository: ""
+  tag: "latest"
 
 service:
   port: 3000
 
-env: {}
+env: {}   # will be merged from umbrella

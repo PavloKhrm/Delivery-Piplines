@@ -1,0 +1,46 @@
+global:
+  domain: zhi.local
+  clientName: zhi
+
+secrets:
+  mysqlRootPassword: "testclient-mysql-pass"
+  redisPassword: "testclient-redis-pass"
+  elasticPassword: "testclient-elastic-pass"
+  appSessionSecret: "testclient-session-secret"
+
+backend:
+  image:
+    repository: zhicheng029/basic-backend
+    tag: latest
+  service:
+    port: 3000
+  env:
+    APP_ENV: production
+    APP_NAME: "TestClient Blog"
+    APP_URL: "https://testclient.local"
+    APP_FRONTEND_DOMAIN: testclient.local
+    APP_FRONTEND_URL: "https://testclient.local"
+    APP_PORT: "3000"
+    APP_SESSION_COOKIE: "basic-api-session"
+    APP_TIMEZONE: UTC
+    APP_CONTACT_MAIL: "info@testclient.com"
+    APP_CONTACT_WEBSITE: "https://testclient.com"
+
+    DATABASE_HOST: mysql
+    DATABASE_PORT: "3306"
+    DATABASE_USERNAME: root
+    DATABASE_NAME: testclient_db
+
+    REDIS_HOST: redis-master
+    REDIS_CACHE_TTL: "3600000"
+    REDIS_KEY_PREFIX: "basic-api:"
+
+    ELASTIC_NODE_ENDPOINT: "http://opensearch-cluster-master:9200"
+    ELASTIC_PORT: "9200"
+
+frontend:
+  image:
+    repository: zhicheng029/basic-frontend
+    tag: latest
+  service:
+    port: 80

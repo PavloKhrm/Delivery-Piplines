@@ -1,8 +1,10 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: backend-config
+  name: {{ include "backend.fullname" . }}-config
+  labels:
+    {{ include "backend.labels" . | nindent 4 }}
 data:
   {{- range $k, $v := .Values.backend.env }}
-  {{ $k }}: "{{ $v }}"
+  {{ $k }}: {{ $v | quote }}
   {{- end }}
