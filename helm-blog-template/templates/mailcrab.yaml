@@ -1,0 +1,97 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "blog-template.fullname" . }}-mailcrab
+  namespace: {{ .Values.client.namespace }}
+  labels:
+    {{- include "blog-template.labels" . | nindent 4 }}
+    component: mailcrab
+spec:
+  replicas: {{ .Values.replicas.mailcrab }}
+  selector:
+    matchLabels:
+      {{- include "blog-template.selectorLabels" . | nindent 6 }}
+      component: mailcrab
+  template:
+    metadata:
+      labels:
+        {{- include "blog-template.selectorLabels" . | nindent 8 }}
+        component: mailcrab
+    spec:
+      {{- if .Values.security.podSecurityContext.enabled }}
+      securityContext:
+        fsGroup: {{ .Values.security.podSecurityContext.fsGroup }}
+        runAsUser: {{ .Values.security.podSecurityContext.runAsUser }}
+        runAsGroup: {{ .Values.security.podSecurityContext.runAsGroup }}
+      {{- end }}
+      containers:
+      - name: mailcrab
+        image: "{{ .Values.images.mailcrab.repository }}:{{ .Values.images.mailcrab.tag }}"
+        imagePullPolicy: {{ .Values.images.mailcrab.pullPolicy }}
+        ports:
+        - containerPort: 1080
+          name: web
+        - containerPort: 1025
+          name: smtp
+        env:
+        - name: MAILCRAB_SMTP_PORT
+          value: "1025"
+        - name: MAILCRAB_WEB_PORT
+          value: "1080"
+        - name: MAILCRAB_STORAGE_TYPE
+          value: "memory"
+        - name: MAILCRAB_MAX_MESSAGES
+          value: "1000"
+        {{- if .Values.security.containerSecurityContext.enabled }}
+        securityContext:
+          allowPrivilegeEscalation: {{ .Values.security.containerSecurityContext.allowPrivilegeEscalation }}
+          readOnlyRootFilesystem: {{ .Values.security.containerSecurityContext.readOnlyRootFilesystem }}
+          runAsNonRoot: {{ .Values.security.containerSecurityContext.runAsNonRoot }}
+          capabilities:
+            drop: {{ .Values.security.containerSecurityContext.capabilities.drop | toYaml | nindent 14 }}
+        {{- end }}
+        {{- if .Values.resources.mailcrab }}
+        resources:
+          {{- toYaml .Values.resources.mailcrab | nindent 10 }}
+        {{- end }}
+        {{- if .Values.healthChecks.enabled }}
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 1080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 1080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "blog-template.mailcrab.serviceName" . }}
+  namespace: {{ .Values.client.namespace }}
+  labels:
+    {{- include "blog-template.labels" . | nindent 4 }}
+    component: mailcrab
+spec:
+  type: {{ .Values.services.type }}
+  ports:
+  - port: 1080
+    targetPort: 1080
+    protocol: TCP
+    name: web
+  - port: 1025
+    targetPort: 1025
+    protocol: TCP
+    name: smtp
+  selector:
+    {{- include "blog-template.selectorLabels" . | nindent 4 }}
+    component: mailcrab

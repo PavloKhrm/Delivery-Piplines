@@ -1,0 +1,122 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "blog-template.fullname" . }}-backend
+  namespace: {{ .Values.client.namespace }}
+  labels:
+    {{- include "blog-template.labels" . | nindent 4 }}
+    component: backend
+spec:
+  replicas: {{ .Values.replicas.backend }}
+  selector:
+    matchLabels:
+      {{- include "blog-template.selectorLabels" . | nindent 6 }}
+      component: backend
+  template:
+    metadata:
+      labels:
+        {{- include "blog-template.selectorLabels" . | nindent 8 }}
+        component: backend
+    spec:
+      {{- if .Values.security.podSecurityContext.enabled }}
+      securityContext:
+        fsGroup: {{ .Values.security.podSecurityContext.fsGroup }}
+        runAsUser: {{ .Values.security.podSecurityContext.runAsUser }}
+        runAsGroup: {{ .Values.security.podSecurityContext.runAsGroup }}
+      {{- end }}
+      initContainers:
+      - name: wait-for-mysql
+        image: busybox:1.36
+        command: ['sh', '-c']
+        args:
+        - |
+          until nc -z {{ include "blog-template.mysql.serviceName" . }} {{ .Values.ports.mysql.internal }}; do
+            echo "Waiting for MySQL to be ready..."
+            sleep 2
+          done
+          echo "MySQL is ready!"
+      - name: wait-for-redis
+        image: busybox:1.36
+        command: ['sh', '-c']
+        args:
+        - |
+          until nc -z {{ include "blog-template.redis.serviceName" . }} {{ .Values.ports.redis.internal }}; do
+            echo "Waiting for Redis to be ready..."
+            sleep 2
+          done
+          echo "Redis is ready!"
+      {{- if .Values.elasticsearch.enabled }}
+      - name: wait-for-elasticsearch
+        image: busybox:1.36
+        command: ['sh', '-c']
+        args:
+        - |
+          until nc -z {{ include "blog-template.elasticsearch.serviceName" . }} {{ .Values.ports.elasticsearch.internal }}; do
+            echo "Waiting for Elasticsearch to be ready..."
+            sleep 2
+          done
+          echo "Elasticsearch is ready!"
+      {{- end }}
+      containers:
+      - name: backend
+        image: "{{ .Values.images.backend.repository }}:{{ .Values.images.backend.tag }}"
+        imagePullPolicy: {{ .Values.images.backend.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.ports.backend.internal }}
+          name: http
+        envFrom:
+        - configMapRef:
+            name: {{ include "blog-template.fullname" . }}-config
+        - secretRef:
+            name: {{ include "blog-template.fullname" . }}-secrets
+        {{- if .Values.security.containerSecurityContext.enabled }}
+        securityContext:
+          allowPrivilegeEscalation: {{ .Values.security.containerSecurityContext.allowPrivilegeEscalation }}
+          readOnlyRootFilesystem: {{ .Values.security.containerSecurityContext.readOnlyRootFilesystem }}
+          runAsNonRoot: {{ .Values.security.containerSecurityContext.runAsNonRoot }}
+          capabilities:
+            drop: {{ .Values.security.containerSecurityContext.capabilities.drop | toYaml | nindent 14 }}
+        {{- end }}
+        {{- if .Values.resources.backend }}
+        resources:
+          {{- toYaml .Values.resources.backend | nindent 10 }}
+        {{- end }}
+        {{- if .Values.healthChecks.enabled }}
+        livenessProbe:
+          {{- toYaml .Values.healthChecks.backend.livenessProbe | nindent 10 }}
+        readinessProbe:
+          {{- toYaml .Values.healthChecks.backend.readinessProbe | nindent 10 }}
+        {{- end }}
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: app-logs
+          mountPath: /app/logs
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: app-logs
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "blog-template.backend.serviceName" . }}
+  namespace: {{ .Values.client.namespace }}
+  labels:
+    {{- include "blog-template.labels" . | nindent 4 }}
+    component: backend
+  {{- with .Values.services.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.services.type }}
+  ports:
+  - port: {{ .Values.ports.backend.internal }}
+    targetPort: {{ .Values.ports.backend.internal }}
+    protocol: TCP
+    name: http
+  selector:
+    {{- include "blog-template.selectorLabels" . | nindent 4 }}
+    component: backend

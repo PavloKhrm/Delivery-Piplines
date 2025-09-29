@@ -1,0 +1,187 @@
+# Global middlewares for Traefik
+
+# Default rate limiting middleware
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: default-ratelimit
+  namespace: default
+spec:
+  rateLimit:
+    burst: 200
+    average: 100
+    period: 1m
+    sourceCriterion:
+      ipStrategy:
+        depth: 1
+        excludedIPs:
+          - "127.0.0.1/32"
+          - "10.0.0.0/8"
+          - "192.168.0.0/16"
+          - "172.16.0.0/12"
+
+---
+# Security headers middleware
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: security-headers
+  namespace: default
+spec:
+  headers:
+    frameDeny: true
+    sslRedirect: true
+    browserXssFilter: true
+    contentTypeNosniff: true
+    forceSTSHeader: true
+    stsIncludeSubdomains: true
+    stsPreload: true
+    stsSeconds: 31536000
+    customRequestHeaders:
+      X-Forwarded-Proto: "https"
+    customResponseHeaders:
+      X-Robots-Tag: "noindex,nofollow,nosnippet,noarchive"
+      Server: ""
+    referrerPolicy: "strict-origin-when-cross-origin"
+    permissionsPolicy: "camera=(), microphone=(), geolocation=()"
+
+---
+# CORS middleware for API access
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: cors-headers
+  namespace: default
+spec:
+  headers:
+    accessControlAllowMethods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - PATCH
+      - OPTIONS
+    accessControlAllowHeaders:
+      - "*"
+    accessControlAllowOriginList:
+      - "https://*.local"
+      - "https://*.example.com"
+    accessControlMaxAge: 100
+    addVaryHeader: true
+    accessControlAllowCredentials: true
+
+---
+# Compression middleware
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: compression
+  namespace: default
+spec:
+  compress:
+    excludedContentTypes:
+      - "text/event-stream"
+
+---
+# Circuit breaker middleware
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: circuit-breaker
+  namespace: default
+spec:
+  circuitBreaker:
+    expression: "NetworkErrorRatio() > 0.30 || ResponseCodeRatio(500, 600, 0, 600) > 0.25"
+    checkPeriod: "10s"
+    fallbackDuration: "30s"
+    recoveryDuration: "30s"
+
+---
+# Retry middleware
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: retry
+  namespace: default
+spec:
+  retry:
+    attempts: 3
+    initialInterval: "100ms"
+
+---
+# IP whitelist middleware (for admin access)
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: admin-whitelist
+  namespace: default
+spec:
+  ipWhiteList:
+    sourceRange:
+      - "127.0.0.1/32"
+      - "10.0.0.0/8"
+      - "192.168.0.0/16"
+      - "172.16.0.0/12"
+
+---
+# Authentication middleware (basic auth example)
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: basic-auth
+  namespace: default
+spec:
+  basicAuth:
+    secret: basic-auth-secret
+    removeHeader: true
+
+---
+# Redirect to HTTPS middleware
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: https-redirect
+  namespace: default
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
+
+---
+# Strip prefix middleware
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: api-strip-prefix
+  namespace: default
+spec:
+  stripPrefix:
+    prefixes:
+      - "/api/v1"
+      - "/api"
+
+---
+# Add prefix middleware
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: api-add-prefix
+  namespace: default
+spec:
+  addPrefix:
+    prefix: "/api"
+
+---
+# Request/response size limits
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: size-limit
+  namespace: default
+spec:
+  buffering:
+    maxRequestBodyBytes: 10485760  # 10MB
+    memRequestBodyBytes: 2097152   # 2MB
+    maxResponseBodyBytes: 10485760 # 10MB
+    memResponseBodyBytes: 2097152  # 2MB
+    retryExpression: "IsNetworkError() && Attempts() <= 2"

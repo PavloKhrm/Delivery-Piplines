@@ -1,0 +1,246 @@
+# Traefik configuration for multi-tenant blog template system
+
+# Global configuration
+globalArguments:
+  - "--global.checknewversion=false"
+  - "--global.sendanonymoususage=false"
+
+# Deployment configuration
+deployment:
+  enabled: true
+  replicas: 2
+  podAnnotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/metrics"
+    prometheus.io/port: "9100"
+
+# Service configuration
+service:
+  enabled: true
+  type: LoadBalancer
+  annotations: {}
+  labels: {}
+  spec:
+    loadBalancerSourceRanges: []
+  loadBalancerSourceRanges: []
+
+# Ports configuration
+ports:
+  web:
+    port: 80
+    expose:
+      default: true
+    exposedPort: 80
+    protocol: TCP
+    redirectTo:
+      port: websecure
+  websecure:
+    port: 443
+    expose:
+      default: true
+    exposedPort: 443
+    protocol: TCP
+    tls:
+      enabled: true
+      options: ""
+      certResolver: "letsencrypt"
+  traefik:
+    port: 9000
+    expose:
+      default: false
+    protocol: TCP
+
+# TLS configuration
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: admin@example.com  # Change this to your email
+      storage: /data/acme.json
+      caServer: https://acme-v02.api.letsencrypt.org/directory
+      httpChallenge:
+        entryPoint: web
+      # Alternative: DNS challenge for wildcard certificates
+      # dnsChallenge:
+      #   provider: cloudflare
+      #   resolvers:
+      #     - "1.1.1.1:53"
+      #     - "8.8.8.8:53"
+
+# Ingress configuration
+ingressRoute:
+  dashboard:
+    enabled: true
+    annotations: {}
+    labels: {}
+    matchRule: Host(`traefik.local`)
+    entryPoints: ["websecure"]
+    middlewares: []
+    tls:
+      secretName: traefik-dashboard-tls
+
+# Logs configuration
+logs:
+  general:
+    level: INFO
+    filePath: ""
+  access:
+    enabled: true
+    filePath: ""
+    bufferingSize: 0
+    filters:
+      statuscodes: "200,300-302"
+      retryattempts: true
+      minduration: "10ms"
+    fields:
+      general:
+        defaultmode: keep
+        names:
+          ClientUsername: drop
+      headers:
+        defaultmode: drop
+        names:
+          User-Agent: keep
+          Authorization: drop
+          Content-Type: keep
+
+# Metrics configuration
+metrics:
+  prometheus:
+    enabled: true
+    addEntryPointsLabels: true
+    addServicesLabels: true
+    entryPoint: traefik
+
+# Tracing configuration (optional)
+tracing: {}
+
+# Additional arguments
+additionalArguments:
+  # Enable API and dashboard
+  - "--api.dashboard=true"
+  - "--api.insecure=false"
+  
+  # Entry points
+  - "--entrypoints.web.address=:80"
+  - "--entrypoints.websecure.address=:443"
+  
+  # Providers
+  - "--providers.kubernetescrd=true"
+  - "--providers.kubernetescrd.allowCrossNamespace=true"
+  - "--providers.kubernetesingress=true"
+  - "--providers.kubernetesingress.allowCrossNamespace=true"
+  
+  # Certificates
+  - "--certificatesresolvers.letsencrypt.acme.email=admin@example.com"
+  - "--certificatesresolvers.letsencrypt.acme.storage=/data/acme.json"
+  - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+  
+  # Security
+  - "--global.insecureSkipVerify=false"
+  - "--serversTransport.insecureSkipVerify=false"
+  
+  # Performance
+  - "--entrypoints.web.transport.respondingTimeouts.readTimeout=60s"
+  - "--entrypoints.web.transport.respondingTimeouts.writeTimeout=60s"
+  - "--entrypoints.web.transport.respondingTimeouts.idleTimeout=180s"
+  
+  # Rate limiting (global)
+  - "--entrypoints.web.http.middlewares=default-ratelimit@kubernetescrd"
+  - "--entrypoints.websecure.http.middlewares=default-ratelimit@kubernetescrd"
+
+# Environment variables
+env:
+  - name: CLOUDFLARE_EMAIL
+    valueFrom:
+      secretKeyRef:
+        name: cloudflare-credentials
+        key: email
+        optional: true
+  - name: CLOUDFLARE_API_KEY
+    valueFrom:
+      secretKeyRef:
+        name: cloudflare-credentials
+        key: api-key
+        optional: true
+
+# Volumes for ACME storage
+persistence:
+  enabled: true
+  name: data
+  accessMode: ReadWriteOnce
+  size: 128Mi
+  storageClass: ""
+  path: /data
+  annotations: {}
+
+# Security context
+securityContext:
+  capabilities:
+    drop: [ALL]
+  readOnlyRootFilesystem: true
+  runAsGroup: 65532
+  runAsNonRoot: true
+  runAsUser: 65532
+
+podSecurityContext:
+  fsGroup: 65532
+
+# Resources
+resources:
+  requests:
+    cpu: 100m
+    memory: 50Mi
+  limits:
+    cpu: 300m
+    memory: 150Mi
+
+# Node selection
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Priority class
+priorityClassName: ""
+
+# Pod disruption budget
+podDisruptionBudget:
+  enabled: false
+  maxUnavailable: 1
+  minAvailable: 0
+
+# Autoscaling
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 60
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 60
+
+# RBAC
+rbac:
+  enabled: true
+  namespaced: false
+
+# Service account
+serviceAccount: traefik
+
+# Service monitor for Prometheus
+serviceMonitor:
+  enabled: false
+  metricRelabelings: []
+  relabelings: []
+  jobLabel: ""
+  scrapeInterval: 30s
+  scrapeTimeout: 5s
+  honorLabels: true

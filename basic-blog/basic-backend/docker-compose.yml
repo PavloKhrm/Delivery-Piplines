@@ -1,0 +1,85 @@
+services:
+  database:
+    container_name: database
+    image: mysql:8.4.5
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DATABASE_PASSWORD}
+      MYSQL_DATABASE: ${DATABASE_NAME}
+      TZ: ${APP_TIMEZONE}
+    ports:
+      - 3306:3306
+    command:
+      [
+        'mysqld',
+        '--character-set-server=utf8mb4',
+        '--collation-server=utf8mb4_0900_ai_ci',
+        '--authentication-policy=*'
+      ]
+    volumes:
+      - mysql_data:/var/lib/mysql
+    cap_add:
+      - SYS_NICE # CAP_SYS_NICE
+  redis:
+    container_name: redis
+    image: redis:7.4.3-alpine
+    restart: always
+    environment:
+      ALLOW_EMPTY_PASSWORD: 'no'
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    ports:
+      - 6379:6379
+    volumes:
+      # - ./docker/redis/redis.conf:/opt/bitnami/redis/mounted-etc/redis.conf
+      - redis_data:/bitnami/redis/data
+  phpmyadmin:
+    container_name: phpmyadmin
+    image: phpmyadmin/phpmyadmin:latest
+    restart: always
+    ports:
+      - 8000:80
+    environment:
+      - PMA_ARBITRARY=0
+      - PMA_HOST=database
+      - MYSQL_DATABASE=${DATABASE_NAME}
+      - MYSQL_ROOT_PASSWORD=${DATABASE_PASSWORD}
+      - UPLOAD_LIMIT=512M
+      - MAX_EXECUTION_TIME=600
+    depends_on:
+      - database
+    logging:
+      driver: none
+  es01:
+    image: docker.elastic.co/elasticsearch/elasticsearch-wolfi:8.18.1
+    container_name: es01
+    restart: always
+    environment:
+      - ES_JAVA_OPTS=-Xms4g -Xmx4g
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+    ulimits:
+      # Read here why: https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html#_disable_swapping
+      memlock:
+        soft: -1
+        hard: -1
+    deploy:
+      resources:
+        limits:
+          memory: 6G
+    volumes:
+      - es01_data:/usr/share/elasticsearch/data
+      - ./docker/elastic/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+    ports:
+      - ${ELASTIC_PORT}:9200
+  mailcrab:
+    container_name: mailcrab
+    image: marlonb/mailcrab:latest
+    restart: always
+    logging:
+      driver: 'none' # Disable saving logs
+    ports:
+      - 1025:1025 # SMTP server
+      - 8025:1080 # Web UI
+volumes:
+  mysql_data:
+  redis_data:
+  es01_data:

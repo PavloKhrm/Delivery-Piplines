@@ -1,0 +1,62 @@
+# Simple Traefik configuration for multi-tenant setup
+
+# Deployment configuration
+deployment:
+  replicas: 1
+
+# Service configuration
+service:
+  type: LoadBalancer
+
+# Ports configuration
+ports:
+  web:
+    port: 80
+  websecure:
+    port: 443
+  traefik:
+    port: 9000
+
+# Enable dashboard
+api:
+  dashboard: true
+  insecure: true
+
+# Providers
+providers:
+  kubernetescrd:
+    enabled: true
+    allowCrossNamespace: true
+  kubernetesingress:
+    enabled: true
+    allowCrossNamespace: true
+
+# Logs
+logs:
+  general:
+    level: INFO
+  access:
+    enabled: true
+
+# Resources
+resources:
+  requests:
+    cpu: 100m
+    memory: 50Mi
+  limits:
+    cpu: 300m
+    memory: 150Mi
+
+# Additional arguments for configuration
+additionalArguments:
+  - "--entrypoints.web.address=:80"
+  - "--entrypoints.websecure.address=:443"
+  - "--providers.kubernetescrd=true"
+  - "--providers.kubernetescrd.allowCrossNamespace=true"
+  - "--providers.kubernetesingress=true"
+  - "--providers.kubernetesingress.allowCrossNamespace=true"
+  - "--api.dashboard=true"
+  - "--api.insecure=true"
+  - "--metrics.prometheus=true"
+  - "--log.level=INFO"
+  - "--accesslog=true"

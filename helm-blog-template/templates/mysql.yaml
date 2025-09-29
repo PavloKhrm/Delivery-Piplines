@@ -1,0 +1,186 @@
+{{- if .Values.persistence.mysql.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "blog-template.fullname" . }}-mysql-pvc
+  namespace: {{ .Values.client.namespace }}
+  labels:
+    {{- include "blog-template.labels" . | nindent 4 }}
+    component: mysql
+spec:
+  accessModes:
+    - {{ .Values.persistence.mysql.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.mysql.size }}
+  {{- if .Values.persistence.mysql.storageClass }}
+  storageClassName: {{ .Values.persistence.mysql.storageClass }}
+  {{- end }}
+---
+{{- end }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "blog-template.fullname" . }}-mysql
+  namespace: {{ .Values.client.namespace }}
+  labels:
+    {{- include "blog-template.labels" . | nindent 4 }}
+    component: mysql
+spec:
+  serviceName: {{ include "blog-template.mysql.serviceName" . }}
+  replicas: {{ .Values.replicas.mysql }}
+  selector:
+    matchLabels:
+      {{- include "blog-template.selectorLabels" . | nindent 6 }}
+      component: mysql
+  template:
+    metadata:
+      labels:
+        {{- include "blog-template.selectorLabels" . | nindent 8 }}
+        component: mysql
+    spec:
+      {{- if .Values.security.podSecurityContext.enabled }}
+      securityContext:
+        fsGroup: 999
+        runAsUser: 999
+        runAsGroup: 999
+      {{- end }}
+      containers:
+      - name: mysql
+        image: "{{ .Values.images.mysql.repository }}:{{ .Values.images.mysql.tag }}"
+        imagePullPolicy: {{ .Values.images.mysql.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.ports.mysql.internal }}
+          name: mysql
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "blog-template.fullname" . }}-secrets
+              key: MYSQL_ROOT_PASSWORD
+        - name: MYSQL_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              name: {{ include "blog-template.fullname" . }}-config
+              key: DATABASE_NAME
+        - name: MYSQL_USER
+          valueFrom:
+            configMapKeyRef:
+              name: {{ include "blog-template.fullname" . }}-config
+              key: DATABASE_USERNAME
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "blog-template.fullname" . }}-secrets
+              key: MYSQL_PASSWORD
+        - name: MYSQL_CHARSET
+          value: "utf8mb4"
+        - name: MYSQL_COLLATION
+          value: "utf8mb4_unicode_ci"
+        {{- if .Values.security.containerSecurityContext.enabled }}
+        securityContext:
+          allowPrivilegeEscalation: {{ .Values.security.containerSecurityContext.allowPrivilegeEscalation }}
+          readOnlyRootFilesystem: {{ .Values.security.containerSecurityContext.readOnlyRootFilesystem }}
+          runAsNonRoot: {{ .Values.security.containerSecurityContext.runAsNonRoot }}
+          capabilities:
+            drop: {{ .Values.security.containerSecurityContext.capabilities.drop | toYaml | nindent 14 }}
+        {{- end }}
+        {{- if .Values.resources.mysql }}
+        resources:
+          {{- toYaml .Values.resources.mysql | nindent 10 }}
+        {{- end }}
+        {{- if .Values.healthChecks.enabled }}
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - 'mysqladmin ping -h localhost -u root -p"$MYSQL_ROOT_PASSWORD"'
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - 'mysql -h localhost -u root -p"$MYSQL_ROOT_PASSWORD" -e "SELECT 1"'
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        {{- end }}
+        volumeMounts:
+        - name: mysql-storage
+          mountPath: /var/lib/mysql
+        - name: mysql-config
+          mountPath: /etc/mysql/conf.d
+      volumes:
+      {{- if .Values.persistence.mysql.enabled }}
+      - name: mysql-storage
+        persistentVolumeClaim:
+          claimName: {{ include "blog-template.fullname" . }}-mysql-pvc
+      {{- else }}
+      - name: mysql-storage
+        emptyDir: {}
+      {{- end }}
+      - name: mysql-config
+        configMap:
+          name: {{ include "blog-template.fullname" . }}-mysql-config
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "blog-template.fullname" . }}-mysql-config
+  namespace: {{ .Values.client.namespace }}
+  labels:
+    {{- include "blog-template.labels" . | nindent 4 }}
+    component: mysql
+data:
+  custom.cnf: |
+    [mysqld]
+    # Performance settings
+    innodb_buffer_pool_size = 1G
+    innodb_log_file_size = 256M
+    innodb_flush_log_at_trx_commit = 2
+    innodb_flush_method = O_DIRECT
+    
+    # Connection settings
+    max_connections = 200
+    thread_cache_size = 16
+    table_open_cache = 4000
+    
+    # Character set
+    character-set-server = utf8mb4
+    collation-server = utf8mb4_unicode_ci
+    
+    # Binary logging
+    server-id = 1
+    log-bin = mysql-bin
+    binlog_format = ROW
+    expire_logs_days = 7
+    
+    # Slow query log
+    slow_query_log = 1
+    slow_query_log_file = /var/lib/mysql/slow.log
+    long_query_time = 2
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "blog-template.mysql.serviceName" . }}
+  namespace: {{ .Values.client.namespace }}
+  labels:
+    {{- include "blog-template.labels" . | nindent 4 }}
+    component: mysql
+spec:
+  type: {{ .Values.services.type }}
+  ports:
+  - port: {{ .Values.ports.mysql.internal }}
+    targetPort: {{ .Values.ports.mysql.internal }}
+    protocol: TCP
+    name: mysql
+  selector:
+    {{- include "blog-template.selectorLabels" . | nindent 4 }}
+    component: mysql

@@ -1,0 +1,282 @@
+# Global configuration
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+  storageClass: ""
+
+# Application metadata
+app:
+  name: blog-template
+  version: "1.0.0"
+  
+# Client-specific configuration (template values)
+client:
+  name: "demo-client"  # Will be overridden for each deployment
+  namespace: "blog-demo-client"  # Will be auto-generated
+  domain: "demo-client.local"  # Will be auto-generated
+
+# Port allocation (will be auto-generated to prevent conflicts)
+ports:
+  backend:
+    internal: 3000
+    external: 30001  # Auto-allocated
+  frontend:
+    internal: 80
+    external: 30002  # Auto-allocated
+  mysql:
+    internal: 3306
+    external: 30003  # Auto-allocated
+  redis:
+    internal: 6379
+    external: 30004  # Auto-allocated
+  elasticsearch:
+    internal: 9200
+    external: 30005  # Auto-allocated
+  mailcrab:
+    internal: 1080
+    external: 30006  # Auto-allocated
+
+# Images configuration
+images:
+  backend:
+    repository: blog-backend
+    tag: latest
+    pullPolicy: IfNotPresent
+  frontend:
+    repository: blog-frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  mysql:
+    repository: mysql
+    tag: "8.0.35"  # Stable version, not 8.4
+    pullPolicy: IfNotPresent
+  redis:
+    repository: redis
+    tag: "7.4.3-alpine"
+    pullPolicy: IfNotPresent
+  elasticsearch:
+    repository: elasticsearch
+    tag: "8.15.0"  # Stable version
+    pullPolicy: IfNotPresent
+
+  mailcrab:
+    repository: marlonb/mailcrab
+    tag: "v1.4.0"
+    pullPolicy: IfNotPresent
+
+# Enable/disable services
+elasticsearch:
+  enabled: true  # Re-enabled with proper privileges
+
+# Replica configuration
+replicas:
+  backend: 2
+  frontend: 2
+  mysql: 1
+  redis: 1
+  elasticsearch: 1
+  mailcrab: 1
+
+# Resource limits and requests
+resources:
+  backend:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+  frontend:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+  mysql:
+    requests:
+      memory: "1Gi"
+      cpu: "500m"
+    limits:
+      memory: "2Gi"
+      cpu: "1000m"
+  redis:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "200m"
+  elasticsearch:
+    requests:
+      memory: "2Gi"
+      cpu: "1000m"
+    limits:
+      memory: "4Gi"
+      cpu: "2000m"
+  mailcrab:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+
+# Persistence configuration
+persistence:
+  mysql:
+    enabled: true
+    size: 20Gi
+    storageClass: ""
+    accessMode: ReadWriteOnce
+  redis:
+    enabled: true
+    size: 5Gi
+    storageClass: ""
+    accessMode: ReadWriteOnce
+  elasticsearch:
+    enabled: true
+    size: 30Gi
+    storageClass: ""
+    accessMode: ReadWriteOnce
+
+# Environment variables (will be auto-generated)
+env:
+  database:
+    name: "blog_db"
+    username: "blog_user"
+    password: ""  # Auto-generated
+    host: "mysql-service"
+    port: 3306
+  redis:
+    host: "redis-service"
+    port: 6379
+    password: ""  # Auto-generated
+  elasticsearch:
+    host: "elasticsearch-service"
+    port: 9200
+    username: "elastic"
+    password: ""  # Auto-generated
+  app:
+    nodeEnv: "production"
+    timezone: "UTC"
+    jwtSecret: ""  # Auto-generated
+    sessionSecret: ""  # Auto-generated
+  mail:
+    host: "mailcrab-service"
+    port: 1025
+    user: "test"
+    password: "test"
+
+# Service configuration
+services:
+  type: ClusterIP  # Internal by default
+  annotations: {}
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: "traefik"
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: "default-auth@kubernetescrd"
+  tls:
+    enabled: false
+    secretName: ""
+
+# Traefik configuration
+traefik:
+  enabled: true
+  service:
+    type: LoadBalancer
+  ports:
+    web:
+      port: 80
+    websecure:
+      port: 443
+  additionalArguments:
+    - "--certificatesresolvers.letsencrypt.acme.email=your-email@example.com"
+    - "--certificatesresolvers.letsencrypt.acme.storage=/data/acme.json"
+    - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+
+# Security configuration
+security:
+  networkPolicies:
+    enabled: true
+  podSecurityContext:
+    enabled: true
+    fsGroup: 1001
+    runAsUser: 1001
+    runAsGroup: 1001
+  containerSecurityContext:
+    enabled: true
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+    runAsNonRoot: true
+    capabilities:
+      drop:
+        - ALL
+
+# Health checks
+healthChecks:
+  enabled: true
+  backend:
+    livenessProbe:
+      httpGet:
+        path: /health
+        port: 3000
+      initialDelaySeconds: 30
+      periodSeconds: 10
+    readinessProbe:
+      httpGet:
+        path: /health
+        port: 3000
+      initialDelaySeconds: 5
+      periodSeconds: 5
+  frontend:
+    livenessProbe:
+      httpGet:
+        path: /
+        port: 80
+      initialDelaySeconds: 30
+      periodSeconds: 10
+    readinessProbe:
+      httpGet:
+        path: /
+        port: 80
+      initialDelaySeconds: 5
+      periodSeconds: 5
+
+# Monitoring and observability
+monitoring:
+  enabled: false
+  prometheus:
+    enabled: false
+    serviceMonitor:
+      enabled: false
+  grafana:
+    enabled: false
+
+# Backup configuration
+backup:
+  enabled: false
+  schedule: "0 2 * * *"
+  retention: "7d"
+
+# Auto-scaling
+autoscaling:
+  enabled: false
+  backend:
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 80
+  frontend:
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 80
+
+# Development mode
+development:
+  enabled: false
+  hostPaths:
+    backend: ""
+    frontend: ""

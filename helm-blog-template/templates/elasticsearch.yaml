@@ -1,0 +1,233 @@
+{{- if .Values.persistence.elasticsearch.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "blog-template.fullname" . }}-elasticsearch-pvc
+  namespace: {{ .Values.client.namespace }}
+  labels:
+    {{- include "blog-template.labels" . | nindent 4 }}
+    component: elasticsearch
+spec:
+  accessModes:
+    - {{ .Values.persistence.elasticsearch.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.elasticsearch.size }}
+  {{- if .Values.persistence.elasticsearch.storageClass }}
+  storageClassName: {{ .Values.persistence.elasticsearch.storageClass }}
+  {{- end }}
+---
+{{- end }}
+{{- if .Values.elasticsearch.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "blog-template.fullname" . }}-elasticsearch
+  namespace: {{ .Values.client.namespace }}
+  labels:
+    {{- include "blog-template.labels" . | nindent 4 }}
+    component: elasticsearch
+spec:
+  serviceName: {{ include "blog-template.elasticsearch.serviceName" . }}
+  replicas: {{ .Values.replicas.elasticsearch }}
+  selector:
+    matchLabels:
+      {{- include "blog-template.selectorLabels" . | nindent 6 }}
+      component: elasticsearch
+  template:
+    metadata:
+      labels:
+        {{- include "blog-template.selectorLabels" . | nindent 8 }}
+        component: elasticsearch
+    spec:
+      {{- if .Values.security.podSecurityContext.enabled }}
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+        runAsGroup: 1000
+      {{- end }}
+      initContainers:
+      - name: increase-vm-max-map
+        image: busybox:1.36
+        command: ['sh', '-c', 'sysctl -w vm.max_map_count=262144']
+        securityContext:
+          privileged: true
+          runAsUser: 0
+          allowPrivilegeEscalation: true
+          capabilities:
+            add:
+              - SYS_ADMIN
+      - name: increase-fd-ulimit
+        image: busybox:1.36
+        command: ['sh', '-c', 'ulimit -n 65536']
+        securityContext:
+          privileged: true
+          runAsUser: 0
+          allowPrivilegeEscalation: true
+      containers:
+      - name: elasticsearch
+        image: "{{ .Values.images.elasticsearch.repository }}:{{ .Values.images.elasticsearch.tag }}"
+        imagePullPolicy: {{ .Values.images.elasticsearch.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.ports.elasticsearch.internal }}
+          name: http
+        - containerPort: 9300
+          name: transport
+        env:
+        - name: node.name
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: cluster.name
+          value: {{ .Values.client.name }}-elasticsearch
+        - name: discovery.type
+          value: single-node
+        - name: bootstrap.memory_lock
+          value: "false"
+        - name: ES_JAVA_OPTS
+          value: "-Xms1g -Xmx1g"
+        - name: xpack.security.enabled
+          value: "true"
+        - name: ELASTIC_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "blog-template.fullname" . }}-secrets
+              key: ELASTIC_PASSWORD
+        - name: xpack.security.http.ssl.enabled
+          value: "false"
+        - name: xpack.security.transport.ssl.enabled
+          value: "false"
+        - name: xpack.monitoring.collection.enabled
+          value: "true"
+        - name: path.data
+          value: /usr/share/elasticsearch/data
+        - name: path.logs
+          value: /usr/share/elasticsearch/logs
+        {{- if .Values.security.containerSecurityContext.enabled }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          runAsNonRoot: true
+          capabilities:
+            drop:
+              - ALL
+            add:
+              - SYS_CHROOT
+        {{- end }}
+        {{- if .Values.resources.elasticsearch }}
+        resources:
+          {{- toYaml .Values.resources.elasticsearch | nindent 10 }}
+        {{- end }}
+        {{- if .Values.healthChecks.enabled }}
+        livenessProbe:
+          httpGet:
+            path: /_cluster/health?local=true
+            port: {{ .Values.ports.elasticsearch.internal }}
+            httpHeaders:
+            - name: Authorization
+              value: Basic {{ printf "%s:%s" .Values.env.elasticsearch.username (include "blog-template.elasticsearch.password" .) | b64enc }}
+          initialDelaySeconds: 90
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /_cluster/health?wait_for_status=yellow&timeout=5s
+            port: {{ .Values.ports.elasticsearch.internal }}
+            httpHeaders:
+            - name: Authorization
+              value: Basic {{ printf "%s:%s" .Values.env.elasticsearch.username (include "blog-template.elasticsearch.password" .) | b64enc }}
+          initialDelaySeconds: 60
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        {{- end }}
+        volumeMounts:
+        - name: elasticsearch-storage
+          mountPath: /usr/share/elasticsearch/data
+        - name: elasticsearch-config
+          mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
+          subPath: elasticsearch.yml
+      volumes:
+      {{- if .Values.persistence.elasticsearch.enabled }}
+      - name: elasticsearch-storage
+        persistentVolumeClaim:
+          claimName: {{ include "blog-template.fullname" . }}-elasticsearch-pvc
+      {{- else }}
+      - name: elasticsearch-storage
+        emptyDir: {}
+      {{- end }}
+      - name: elasticsearch-config
+        configMap:
+          name: {{ include "blog-template.fullname" . }}-elasticsearch-config
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "blog-template.fullname" . }}-elasticsearch-config
+  namespace: {{ .Values.client.namespace }}
+  labels:
+    {{- include "blog-template.labels" . | nindent 4 }}
+    component: elasticsearch
+data:
+  elasticsearch.yml: |
+    cluster.name: {{ .Values.client.name }}-elasticsearch
+    node.name: ${node.name}
+    
+    # Network
+    network.host: 0.0.0.0
+    http.port: {{ .Values.ports.elasticsearch.internal }}
+    transport.port: 9300
+    
+    # Discovery
+    discovery.type: single-node
+    
+    # Security
+    xpack.security.enabled: true
+    xpack.security.http.ssl.enabled: false
+    xpack.security.transport.ssl.enabled: false
+    
+    # Monitoring
+    xpack.monitoring.collection.enabled: true
+    xpack.monitoring.elasticsearch.collection.enabled: false
+    
+    # Performance
+    bootstrap.memory_lock: false
+    
+    # Paths
+    path.data: /usr/share/elasticsearch/data
+    path.logs: /usr/share/elasticsearch/logs
+    
+    # Index management
+    action.destructive_requires_name: true
+    cluster.routing.allocation.disk.threshold_enabled: true
+    cluster.routing.allocation.disk.watermark.low: 85%
+    cluster.routing.allocation.disk.watermark.high: 90%
+    cluster.routing.allocation.disk.watermark.flood_stage: 95%
+    
+    # Logging
+    logger.org.elasticsearch.deprecation: warn
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "blog-template.elasticsearch.serviceName" . }}
+  namespace: {{ .Values.client.namespace }}
+  labels:
+    {{- include "blog-template.labels" . | nindent 4 }}
+    component: elasticsearch
+spec:
+  type: {{ .Values.services.type }}
+  ports:
+  - port: {{ .Values.ports.elasticsearch.internal }}
+    targetPort: {{ .Values.ports.elasticsearch.internal }}
+    protocol: TCP
+    name: http
+  - port: 9300
+    targetPort: 9300
+    protocol: TCP
+    name: transport
+  selector:
+    {{- include "blog-template.selectorLabels" . | nindent 4 }}
+    component: elasticsearch
+{{- end }}

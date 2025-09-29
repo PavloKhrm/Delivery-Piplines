@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "blog-template.fullname" . }}-config
+  namespace: {{ .Values.client.namespace }}
+  labels:
+    {{- include "blog-template.labels" . | nindent 4 }}
+data:
+  # Database configuration
+  DATABASE_HOST: {{ include "blog-template.mysql.fullname" . | quote }}
+  DATABASE_PORT: {{ .Values.env.database.port | quote }}
+  DATABASE_NAME: {{ .Values.env.database.name | quote }}
+  DATABASE_USERNAME: {{ .Values.env.database.username | quote }}
+  
+  # Redis configuration
+  REDIS_HOST: {{ include "blog-template.redis.fullname" . | quote }}
+  REDIS_PORT: {{ .Values.env.redis.port | quote }}
+  
+  # Elasticsearch configuration
+  ELASTICSEARCH_HOST: {{ include "blog-template.elasticsearch.fullname" . | quote }}
+  ELASTICSEARCH_PORT: {{ .Values.env.elasticsearch.port | quote }}
+  ELASTICSEARCH_USERNAME: {{ .Values.env.elasticsearch.username | quote }}
+  
+  # Mail configuration
+  MAIL_HOST: {{ include "blog-template.mailcrab.fullname" . | quote }}
+  MAIL_PORT: {{ .Values.env.mail.port | quote }}
+  MAIL_USER: {{ .Values.env.mail.user | quote }}
+  MAIL_PASSWORD: {{ .Values.env.mail.password | quote }}
+  
+  # Application configuration
+  NODE_ENV: {{ .Values.env.app.nodeEnv | quote }}
+  APP_TIMEZONE: {{ .Values.env.app.timezone | quote }}
+  APP_PORT: {{ .Values.ports.backend.internal | quote }}
+  
+  # Client-specific configuration
+  CLIENT_NAME: {{ .Values.client.name | quote }}
+  CLIENT_DOMAIN: {{ .Values.client.domain | quote }}
+  
+  # Service discovery
+  BACKEND_SERVICE: {{ include "blog-template.backend.serviceName" . | quote }}
+  FRONTEND_SERVICE: {{ include "blog-template.frontend.serviceName" . | quote }}

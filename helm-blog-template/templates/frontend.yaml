@@ -1,0 +1,108 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "blog-template.fullname" . }}-frontend
+  namespace: {{ .Values.client.namespace }}
+  labels:
+    {{- include "blog-template.labels" . | nindent 4 }}
+    component: frontend
+spec:
+  replicas: {{ .Values.replicas.frontend }}
+  selector:
+    matchLabels:
+      {{- include "blog-template.selectorLabels" . | nindent 6 }}
+      component: frontend
+  template:
+    metadata:
+      labels:
+        {{- include "blog-template.selectorLabels" . | nindent 8 }}
+        component: frontend
+    spec:
+      {{- if .Values.security.podSecurityContext.enabled }}
+      securityContext:
+        fsGroup: {{ .Values.security.podSecurityContext.fsGroup }}
+        runAsUser: {{ .Values.security.podSecurityContext.runAsUser }}
+        runAsGroup: {{ .Values.security.podSecurityContext.runAsGroup }}
+      {{- end }}
+      initContainers:
+      - name: wait-for-backend
+        image: busybox:1.36
+        command: ['sh', '-c']
+        args:
+        - |
+          until nc -z {{ include "blog-template.backend.serviceName" . }} {{ .Values.ports.backend.internal }}; do
+            echo "Waiting for backend to be ready..."
+            sleep 2
+          done
+          echo "Backend is ready!"
+      containers:
+      - name: frontend
+        image: "{{ .Values.images.frontend.repository }}:{{ .Values.images.frontend.tag }}"
+        imagePullPolicy: {{ .Values.images.frontend.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.ports.frontend.internal }}
+          name: http
+        env:
+        - name: BACKEND_URL
+          value: "http://{{ include "blog-template.backend.serviceName" . }}:{{ .Values.ports.backend.internal }}"
+        - name: CLIENT_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: {{ include "blog-template.fullname" . }}-config
+              key: CLIENT_NAME
+        - name: CLIENT_DOMAIN
+          valueFrom:
+            configMapKeyRef:
+              name: {{ include "blog-template.fullname" . }}-config
+              key: CLIENT_DOMAIN
+        {{- if .Values.security.containerSecurityContext.enabled }}
+        securityContext:
+          allowPrivilegeEscalation: {{ .Values.security.containerSecurityContext.allowPrivilegeEscalation }}
+          readOnlyRootFilesystem: {{ .Values.security.containerSecurityContext.readOnlyRootFilesystem }}
+          runAsNonRoot: {{ .Values.security.containerSecurityContext.runAsNonRoot }}
+          capabilities:
+            drop: {{ .Values.security.containerSecurityContext.capabilities.drop | toYaml | nindent 14 }}
+        {{- end }}
+        {{- if .Values.resources.frontend }}
+        resources:
+          {{- toYaml .Values.resources.frontend | nindent 10 }}
+        {{- end }}
+        {{- if .Values.healthChecks.enabled }}
+        livenessProbe:
+          {{- toYaml .Values.healthChecks.frontend.livenessProbe | nindent 10 }}
+        readinessProbe:
+          {{- toYaml .Values.healthChecks.frontend.readinessProbe | nindent 10 }}
+        {{- end }}
+        volumeMounts:
+        - name: nginx-cache
+          mountPath: /var/cache/nginx
+        - name: nginx-run
+          mountPath: /var/run
+      volumes:
+      - name: nginx-cache
+        emptyDir: {}
+      - name: nginx-run
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "blog-template.frontend.serviceName" . }}
+  namespace: {{ .Values.client.namespace }}
+  labels:
+    {{- include "blog-template.labels" . | nindent 4 }}
+    component: frontend
+  {{- with .Values.services.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.services.type }}
+  ports:
+  - port: {{ .Values.ports.frontend.internal }}
+    targetPort: {{ .Values.ports.frontend.internal }}
+    protocol: TCP
+    name: http
+  selector:
+    {{- include "blog-template.selectorLabels" . | nindent 4 }}
+    component: frontend

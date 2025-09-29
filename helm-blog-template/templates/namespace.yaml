@@ -1,0 +1,18 @@
+{{/*
+Namespace is created by Helm with --create-namespace flag
+This template is disabled to avoid conflicts
+*/}}
+{{- if false }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.client.namespace }}
+  labels:
+    app.kubernetes.io/name: {{ include "blog-template.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    client: {{ .Values.client.name }}
+  annotations:
+    description: "Isolated namespace for {{ .Values.client.name }} blog deployment"
+{{- end }}

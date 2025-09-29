@@ -1,0 +1,184 @@
+{{- if .Values.persistence.redis.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "blog-template.fullname" . }}-redis-pvc
+  namespace: {{ .Values.client.namespace }}
+  labels:
+    {{- include "blog-template.labels" . | nindent 4 }}
+    component: redis
+spec:
+  accessModes:
+    - {{ .Values.persistence.redis.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.redis.size }}
+  {{- if .Values.persistence.redis.storageClass }}
+  storageClassName: {{ .Values.persistence.redis.storageClass }}
+  {{- end }}
+---
+{{- end }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "blog-template.fullname" . }}-redis
+  namespace: {{ .Values.client.namespace }}
+  labels:
+    {{- include "blog-template.labels" . | nindent 4 }}
+    component: redis
+spec:
+  serviceName: {{ include "blog-template.redis.serviceName" . }}
+  replicas: {{ .Values.replicas.redis }}
+  selector:
+    matchLabels:
+      {{- include "blog-template.selectorLabels" . | nindent 6 }}
+      component: redis
+  template:
+    metadata:
+      labels:
+        {{- include "blog-template.selectorLabels" . | nindent 8 }}
+        component: redis
+    spec:
+      {{- if .Values.security.podSecurityContext.enabled }}
+      securityContext:
+        fsGroup: {{ .Values.security.podSecurityContext.fsGroup }}
+        runAsUser: {{ .Values.security.podSecurityContext.runAsUser }}
+        runAsGroup: {{ .Values.security.podSecurityContext.runAsGroup }}
+      {{- end }}
+      containers:
+      - name: redis
+        image: "{{ .Values.images.redis.repository }}:{{ .Values.images.redis.tag }}"
+        imagePullPolicy: {{ .Values.images.redis.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.ports.redis.internal }}
+          name: redis
+        command:
+        - redis-server
+        - /etc/redis/redis.conf
+        env:
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "blog-template.fullname" . }}-secrets
+              key: REDIS_PASSWORD
+        {{- if .Values.security.containerSecurityContext.enabled }}
+        securityContext:
+          allowPrivilegeEscalation: {{ .Values.security.containerSecurityContext.allowPrivilegeEscalation }}
+          readOnlyRootFilesystem: {{ .Values.security.containerSecurityContext.readOnlyRootFilesystem }}
+          runAsNonRoot: {{ .Values.security.containerSecurityContext.runAsNonRoot }}
+          capabilities:
+            drop: {{ .Values.security.containerSecurityContext.capabilities.drop | toYaml | nindent 14 }}
+        {{- end }}
+        {{- if .Values.resources.redis }}
+        resources:
+          {{- toYaml .Values.resources.redis | nindent 10 }}
+        {{- end }}
+        {{- if .Values.healthChecks.enabled }}
+        livenessProbe:
+          exec:
+            command:
+            - redis-cli
+            - --no-auth-warning
+            - -a
+            - $(REDIS_PASSWORD)
+            - ping
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - redis-cli
+            - --no-auth-warning
+            - -a
+            - $(REDIS_PASSWORD)
+            - ping
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        {{- end }}
+        volumeMounts:
+        - name: redis-storage
+          mountPath: /data
+        - name: redis-config
+          mountPath: /etc/redis
+      volumes:
+      {{- if .Values.persistence.redis.enabled }}
+      - name: redis-storage
+        persistentVolumeClaim:
+          claimName: {{ include "blog-template.fullname" . }}-redis-pvc
+      {{- else }}
+      - name: redis-storage
+        emptyDir: {}
+      {{- end }}
+      - name: redis-config
+        configMap:
+          name: {{ include "blog-template.fullname" . }}-redis-config
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "blog-template.fullname" . }}-redis-config
+  namespace: {{ .Values.client.namespace }}
+  labels:
+    {{- include "blog-template.labels" . | nindent 4 }}
+    component: redis
+data:
+  redis.conf: |
+    # Network and security
+    bind 0.0.0.0
+    port {{ .Values.ports.redis.internal }}
+    requirepass ${REDIS_PASSWORD}
+    
+    # Persistence
+    save 900 1
+    save 300 10
+    save 60 10000
+    
+    # Performance
+    maxmemory 256mb
+    maxmemory-policy allkeys-lru
+    
+    # Logging
+    loglevel notice
+    logfile ""
+    
+    # Client management
+    timeout 300
+    tcp-keepalive 300
+    
+    # Append only file
+    appendonly yes
+    appendfilename "appendonly.aof"
+    appendfsync everysec
+    
+    # Disable dangerous commands in production
+    rename-command FLUSHDB ""
+    rename-command FLUSHALL ""
+    rename-command KEYS ""
+    rename-command PEXPIRE ""
+    rename-command DEL ""
+    rename-command CONFIG ""
+    rename-command SHUTDOWN ""
+    rename-command DEBUG ""
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "blog-template.redis.serviceName" . }}
+  namespace: {{ .Values.client.namespace }}
+  labels:
+    {{- include "blog-template.labels" . | nindent 4 }}
+    component: redis
+spec:
+  type: {{ .Values.services.type }}
+  ports:
+  - port: {{ .Values.ports.redis.internal }}
+    targetPort: {{ .Values.ports.redis.internal }}
+    protocol: TCP
+    name: redis
+  selector:
+    {{- include "blog-template.selectorLabels" . | nindent 4 }}
+    component: redis
