@@ -1,6 +1,6 @@
 global:
-  domain: testclient.local        # ingress domain for this client
-  clientName: testclient          # used for naming
+  domain: zhi.local        # ingress domain for this client
+  clientName: zhi          # used for naming
 
 secrets:
   mysqlRootPassword: "password"   # from your .env

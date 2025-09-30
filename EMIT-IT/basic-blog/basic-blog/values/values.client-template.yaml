@@ -1,0 +1,48 @@
+global:
+  # 👇 Unique domain for this client
+  domain: client1.local
+  # 👇 Used for release/namespace naming
+  clientName: client1
+
+secrets:
+  # 👇 All secrets should be unique per client
+  mysqlRootPassword: "client1-mysql-pass"
+  redisPassword: "client1-redis-pass"
+  elasticPassword: "client1-elastic-pass"
+  appSessionSecret: "client1-session-secret"
+
+backend:
+  env:
+    APP_ENV: "production"
+    APP_NAME: "My Blog"
+    APP_URL: "http://{{ .Values.global.clientName }}-backend:3000"
+    APP_FRONTEND_DOMAIN: "{{ .Values.global.domain }}"
+    APP_FRONTEND_URL: "http://{{ .Values.global.domain }}"
+    APP_PORT: "3000"
+    APP_SESSION_SECRET: "{{ .Values.secrets.appSessionSecret }}"
+    APP_SESSION_COOKIE: "{{ .Values.global.clientName }}-session"
+    APP_TIMEZONE: "UTC"
+    APP_CONTACT_MAIL: "info@emit-it.com"
+    APP_CONTACT_WEBSITE: "https://emit-it.com"
+
+    # Database (DNS resolves to the service)
+    DATABASE_HOST: "{{ .Values.global.clientName }}-mysql"
+    DATABASE_PORT: "3306"
+    DATABASE_USERNAME: "root"
+    DATABASE_PASSWORD: "{{ .Values.secrets.mysqlRootPassword }}"
+    DATABASE_NAME: "basic_api_db"
+
+    # Elasticsearch
+    ELASTIC_NODE_ENDPOINT: "http://opensearch-cluster-master:9200"
+    ELASTIC_PASSWORD: "{{ .Values.secrets.elasticPassword }}"
+    ELASTIC_PORT: "9200"
+
+    # Redis
+    REDIS_HOST: "{{ .Values.global.clientName }}-redis-master"
+    REDIS_PASSWORD: "{{ .Values.secrets.redisPassword }}"
+    REDIS_CACHE_TTL: "3600000"
+    REDIS_KEY_PREFIX: "{{ .Values.global.clientName }}:"
+
+frontend:
+  env:
+    APP_FRONTEND_URL: "http://{{ .Values.global.domain }}"

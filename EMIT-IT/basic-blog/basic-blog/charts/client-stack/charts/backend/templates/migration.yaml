@@ -1,4 +1,4 @@
-{{- if and .Values.image .Values.image.repository }}
+{{ if .Values.migrate.enabled }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -16,14 +16,15 @@ spec:
       restartPolicy: Never
       containers:
         - name: migrate
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default "latest" }}"
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default "latest" }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy | default "IfNotPresent" }}
           command: ["/bin/sh","-c"]
           args: ["npm run migration"]
           envFrom:
             - configMapRef:
                 name: {{ .Release.Name }}-backend-config
             - secretRef:
-                name: {{ .Release.Name }}-backend-secrets
+                name: {{ .Release.Name }}-backend-secret
           resources:
             requests:
               cpu: "100m"
@@ -31,4 +32,4 @@ spec:
             limits:
               cpu: "500m"
               memory: "512Mi"
-{{- end }}
+{{ end }}

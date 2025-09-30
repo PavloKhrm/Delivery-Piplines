@@ -1,39 +1,33 @@
 # ---- Build Stage ----
-FROM node:20-alpine AS build
+FROM node:18-bullseye-slim AS build
 
-# Install build tools (needed for bcrypt, etc.)
-RUN apk add --no-cache python3 make g++
+# Install build dependencies for native modules
+RUN apt-get update && apt-get install -y python3 make g++ \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy dependency manifests
+# Install all deps (including devDependencies so Nest CLI is available)
 COPY package*.json ./
-
-# Install dependencies (use npm install for flexibility)
 RUN npm install
 
-# Copy rest of source code
+# Copy the source and build
 COPY . .
-
-# Build the NestJS app
 RUN npm run build
 
+
 # ---- Runtime Stage ----
-FROM node:20-alpine AS runtime
+FROM node:18-bullseye-slim AS runtime
 
 WORKDIR /app
 
-# Copy only dependency manifests and install prod deps
-COPY package*.json ./
-RUN npm install --only=production
+# Install runtime dependencies for native modules
+RUN apt-get update && apt-get install -y python3 make g++ \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy built app from build stage
+# Copy built node_modules and dist
+COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 
-# Copy any extra files NestJS needs at runtime (optional)
-COPY --from=build /app/node_modules ./node_modules
-
 EXPOSE 3000
-
-# Start backend API
 CMD ["node", "dist/main.js"]

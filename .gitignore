@@ -34,3 +34,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Helm values (contain secrets, ignore all by default)
+values/*.yaml
+
+# Allow safe examples/templates to be committed
+!values/values.example.yaml
+!values/values.client-template.yaml

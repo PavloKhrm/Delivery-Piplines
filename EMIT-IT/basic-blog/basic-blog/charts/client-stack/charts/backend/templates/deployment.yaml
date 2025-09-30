@@ -27,7 +27,8 @@ spec:
             - configMapRef:
                 name: {{ .Release.Name }}-backend-config
             - secretRef:
-                name: {{ .Release.Name }}-backend-secrets
+                name: {{ .Release.Name }}-backend-secret
+
           readinessProbe:
             httpGet:
               path: /health
