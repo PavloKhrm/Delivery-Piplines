@@ -8,14 +8,12 @@
 
 
 ### ⚙️Setup Steps
-1. Install Acrylic DNS Proxy (Windows only)
-
-This will store all client domains locally.
-Download and install Acrylic DNS Proxy.
-Edit the hosts file:
-Path: C:\Program Files (x86)\Acrylic DNS Proxy\AcrylicHosts.txt
-Add the line: 127.0.0.1 *.emitit.local
-Restart Acrylic Service: Search “Restart Acrylic Service” in Start Menu.
+1. Install Acrylic DNS Proxy (Windows only, This will store all client domains locally.)
+ - Download and install Acrylic DNS Proxy.
+ - Edit the hosts file:
+ - Path: C:\Program Files (x86)\Acrylic DNS Proxy\AcrylicHosts.txt
+ - Add the line: 127.0.0.1 *.emitit.local
+ - Restart Acrylic Service: Search “Restart Acrylic Service” in Start Menu.
 
 3. Configure Your Network Adapter:
 
