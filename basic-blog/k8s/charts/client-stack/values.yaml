@@ -30,7 +30,7 @@ persistence:
   es01:  { size: 20Gi }
 
 website:
-  image: "nginxdemos/hello:plain-text"
+  image: "nginx:latest"
   port: 80
 
 phpmyadmin:

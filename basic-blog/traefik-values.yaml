@@ -1,0 +1,10 @@
+# traefik-values.yaml (Corrected for modern Traefik)
+providers:
+  kubernetesIngress:
+    enabled: true
+
+# This defines the entry point for HTTP traffic on port 80
+ports:
+  web:
+    port: 8000
+    hostPort: 80

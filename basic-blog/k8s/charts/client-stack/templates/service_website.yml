@@ -46,6 +46,7 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: traefik
 spec:
+  ingressClassName: traefik
   rules:
     - host: {{ .Values.clientId }}.{{ .Values.baseDomain }}
       http:
