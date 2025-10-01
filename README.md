@@ -37,16 +37,18 @@ Restart Acrylic Service: Search “Restart Acrylic Service” in Start Menu.
 4. Open the repo root (/basic-log) and create a cluster: **kind create cluster --config kind-config.yaml**
 
 5. Install Traefik
+ - Open the terminal
  - **helm repo add traefik https://traefik.github.io/charts**
  - **helm repo update**
  - **helm install traefik traefik/traefik -f traefik-values.yaml**
 
 6. Allow Ingress Traffic
-**kubectl label namespace default ingress=allow**
+ - Open the terminal
+ - **kubectl label namespace default ingress=allow**
 
 
 ## Working Instruction
-2. Create a Client (open the second admin terminal on path "\Delivery-Piplines\basic-blog>")
+2. Create a Client (open the terminal on path "\Delivery-Piplines\basic-blog>")
  - .\new-client.bat bill (for window)
  - ./new-client.sh bill (for Mac/Linux)
 
