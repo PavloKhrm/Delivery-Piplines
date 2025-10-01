@@ -6,6 +6,7 @@ import {
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
 import * as dotenv from 'dotenv';
+import * as crypto from 'crypto';
 
 import { AppModule } from './app.module';
 
@@ -20,9 +21,23 @@ async function bootstrap() {
     new FastifyAdapter(),
   );
 
+  const sessionSecretEnv =
+    process.env.SESSION_SECRET || process.env.APP_SESSION_SECRET || '';
+
+  const sessionKey: Buffer =
+    sessionSecretEnv && sessionSecretEnv.length > 0
+      ? Buffer.from(sessionSecretEnv).subarray(0, 32)
+      : crypto.randomBytes(32);
+
+  const sessionSalt: Buffer = crypto
+    .createHash('sha256')
+    .update(sessionKey)
+    .digest()
+    .subarray(0, 32);
+
   await app.register(fastifySecureSession, {
-    key: Buffer.from(process.env.SESSION_SECRET).subarray(0, 32), // Ensure exactly 32 bytes
-    salt: Buffer.from(process.env.SESSION_SECRET).subarray(0, 32),
+    key: sessionKey,
+    salt: sessionSalt,
     cookieName: 'blog-session',
     cookie: {
       domain: process.env.APP_FRONTEND_DOMAIN || 'localhost',
@@ -41,6 +56,9 @@ async function bootstrap() {
     allowedHeaders:
       'Origin,Accept,Content-Type,Content-Length,Content-Range,Range,Authorization,X-CSRF-TOKEN',
   });
+
+  // Set global prefix for all routes
+  app.setGlobalPrefix('api');
 
   await app.listen(
     process.env.APP_PORT ?? 3000,

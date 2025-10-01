@@ -144,7 +144,7 @@ tmp/
 # Backup files
 *.bak
 *.backup
-backup/
+backups/
 
 # Test results
 test-results/

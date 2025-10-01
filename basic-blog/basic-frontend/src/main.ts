@@ -10,16 +10,16 @@ const hasCheckedSession = ref(false);
 const isAuthenticated = ref(false);
 const user = ref(null);
 
-// Check session cookie by calling a protected endpoint
+// Check API availability via health endpoint
 async function checkAuth() {
     try {
-        const res = await fetch('/api', {
+        const res = await fetch('/api/health', {
             credentials: 'include',
         });
-        isAuthenticated.value = res.status !== 401;
+        isAuthenticated.value = res.ok;
         
         if (isAuthenticated.value) {
-            console.log('Auth check:', await res.json());
+            console.log('API health ok');
         }
     } catch {
         isAuthenticated.value = false;

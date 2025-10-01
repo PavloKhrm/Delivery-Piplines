@@ -1,7 +1,7 @@
 <template>
     <div>
         <Card>
-            <template #title>Blog Posts</template>
+            <template #title>{{ blogTitle }} - Blog Posts</template>
             <template #content>
                 <input ref="searchInput" v-model="query" placeholder="Search..." class="border p-2 mb-4 rounded" />
                 <div v-if="loading">Loading...</div>
@@ -21,7 +21,7 @@
                         </router-link>
                     </div>
                 </div>
-                <Paginator :rows="limit" :totalRecords="data?.meta.totalItems || 0"
+                <Paginator :rows="limit" :totalRecords="(data && data.meta ? data.meta.totalItems : 0)"
                     :first="((data?.meta?.currentPage ?? 1) - 1) * limit" @page="handlePageChange"
                     template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink"
                     class="paginator-ticker" />
@@ -31,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, ref, watch, computed } from 'vue';
 import { debounce } from 'lodash-es';
 
 interface CustomPaginateMeta {
@@ -61,9 +61,22 @@ const page = ref(1);
 const limit = ref(3);
 const searchInput = ref<HTMLInputElement>();
 
+// Get blog title from environment variable or use default
+const blogTitle = computed(() => {
+    // In browser environment, we'll get this from a global variable set by nginx
+    if (typeof window !== 'undefined' && (window as any).BLOG_TITLE) {
+        return (window as any).BLOG_TITLE;
+    }
+    return 'Demo Blog'; // Default fallback
+});
+
 const fetchPosts = async () => {
     try {
-        const res = await fetch(`/api/blog-post?query=${query.value}&page=${page.value}&limit=${limit.value}`, { credentials: 'include' });
+        const res = await fetch(`/api/blog-post?query=${encodeURIComponent(query.value)}&page=${page.value}&limit=${limit.value}`, { credentials: 'include' });
+        if (!res.ok) {
+            data.value = { data: [], meta: { totalItems: 0, itemsPerPage: limit.value, totalPages: 0, currentPage: 1 } } as any;
+            return;
+        }
         data.value = await res.json();
     } finally {
         loading.value = false;

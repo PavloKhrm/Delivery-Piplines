@@ -47,7 +47,19 @@ kind create cluster --name k8s-blog-template
 
 ## Quick Start
 
-### 1. Install Traefik (Load Balancer)
+### 1. SSL Certificate Setup (Recommended)
+```powershell
+# Set up SSL certificates for local development
+.\setup-ssl-complete.ps1
+```
+
+This will:
+- Install `mkcert` for local certificate generation
+- Create trusted SSL certificates for all blog domains
+- Configure Traefik for HTTPS with automatic HTTP→HTTPS redirect
+- Set up port forwarding for secure access
+
+### 2. Install Traefik (Load Balancer)
 ```powershell
 helm repo add traefik https://traefik.github.io/charts
 helm repo update
@@ -210,6 +222,164 @@ Add to `C:\Windows\System32\drivers\etc\hosts`:
 - Security contexts
 - Network policies (optional)
 
+## Database Management
+
+### Database Setup and Seeding
+
+After deploying your blog applications, you need to set up the database tables and seed them with sample data.
+
+#### 1. Database Table Creation and Seeding
+
+The system includes a comprehensive database seeding script that:
+- Creates the `blog_posts` table in each MySQL database
+- Seeds 100 sample blog posts with random content using Faker.js
+- Works across all deployed blog namespaces
+
+**Run Database Setup:**
+```powershell
+# Set up all databases (creates tables + seeds data)
+.\setup-databases-working.ps1
+```
+
+This script will:
+- Create `blog_posts` table in each MySQL database
+- Seed 100 random blog posts per database
+- Use correct MySQL credentials from Kubernetes secrets
+- Handle all three blog namespaces (demo, my-company, tech-blog)
+
+#### 2. Manual Database Operations
+
+**Check Database Status:**
+```powershell
+# Check if tables exist
+kubectl exec -n blog-demo-dev $(kubectl get pods -n blog-demo-dev -l "app.kubernetes.io/name=blog-template,component=backend" -o jsonpath="{.items[0].metadata.name}") -- node -e "
+const { DataSource } = require('typeorm');
+const { mySqlDataSourceOptions } = require('./dist/providers/database/datasource.js');
+
+async function checkTables() {
+    const dataSource = new DataSource(mySqlDataSourceOptions);
+    await dataSource.initialize();
+    const result = await dataSource.query('SHOW TABLES');
+    console.log('Tables:', result);
+    await dataSource.destroy();
+}
+checkTables().catch(console.error);
+"
+```
+
+**Check Blog Post Count:**
+```powershell
+# Count blog posts in each database
+kubectl exec -n blog-demo-dev $(kubectl get pods -n blog-demo-dev -l "app.kubernetes.io/name=blog-template,component=backend" -o jsonpath="{.items[0].metadata.name}") -- node -e "
+const { DataSource } = require('typeorm');
+const { mySqlDataSourceOptions } = require('./dist/providers/database/datasource.js');
+
+async function countPosts() {
+    const dataSource = new DataSource(mySqlDataSourceOptions);
+    await dataSource.initialize();
+    const result = await dataSource.query('SELECT COUNT(*) as count FROM blog_posts');
+    console.log('Blog posts:', result[0].count);
+    await dataSource.destroy();
+}
+countPosts().catch(console.error);
+"
+```
+
+#### 3. Custom Seeding
+
+**Run Individual Seeders:**
+```powershell
+# Seed only the demo blog
+kubectl exec -n blog-demo-dev $(kubectl get pods -n blog-demo-dev -l "app.kubernetes.io/name=blog-template,component=backend" -o jsonpath="{.items[0].metadata.name}") -- npm run seed
+
+# Seed only my-company blog
+kubectl exec -n blog-my-company-dev $(kubectl get pods -n blog-my-company-dev -l "app.kubernetes.io/name=blog-template,component=backend" -o jsonpath="{.items[0].metadata.name}") -- npm run seed
+
+# Seed only tech-blog
+kubectl exec -n blog-tech-blog-dev $(kubectl get pods -n blog-tech-blog-dev -l "app.kubernetes.io/name=blog-template,component=backend" -o jsonpath="{.items[0].metadata.name}") -- npm run seed
+```
+
+**Custom Seeder Development:**
+```typescript
+// Create custom seeder: src/database/seeders/custom-seeder.ts
+import { Seeder } from '@concepta/typeorm-seeding';
+import { faker } from '@faker-js/faker';
+import mySqlDataSource from '@/providers/database/datasource';
+import { BlogPost } from '../../models/blog-post/entities/blog-post.entity';
+
+export class CustomSeeder extends Seeder {
+  async run() {
+    const datasource = await mySqlDataSource.initialize();
+    const blogPostRepository = datasource.getRepository(BlogPost);
+
+    // Create custom blog posts
+    for (let i = 0; i < 50; i++) {
+      const post = new BlogPost();
+      post.title = `Custom Post ${i + 1}: ${faker.lorem.sentence()}`;
+      post.content = faker.lorem.paragraphs(3, '\n\n');
+      await blogPostRepository.save(post);
+    }
+  }
+}
+```
+
+#### 4. Database Migration (Advanced)
+
+**Manual Table Creation:**
+```powershell
+# Create tables manually via MySQL pod
+kubectl exec -n blog-demo-dev $(kubectl get pods -n blog-demo-dev -l "app.kubernetes.io/name=blog-template,component=mysql" -o jsonpath="{.items[0].metadata.name}") -- mysql -u root -p"eABUkpfk6XoEmOiR*tsXaVZG6QzUGsln" blog_db -e "
+CREATE TABLE IF NOT EXISTS blog_posts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);"
+```
+
+**Reset Database:**
+```powershell
+# Drop and recreate tables
+kubectl exec -n blog-demo-dev $(kubectl get pods -n blog-demo-dev -l "app.kubernetes.io/name=blog-template,component=mysql" -o jsonpath="{.items[0].metadata.name}") -- mysql -u root -p"eABUkpfk6XoEmOiR*tsXaVZG6QzUGsln" blog_db -e "
+DROP TABLE IF EXISTS blog_posts;
+CREATE TABLE blog_posts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);"
+```
+
+#### 5. Seeding Verification
+
+**Verify Seeding Success:**
+```powershell
+# Check all blogs have data
+Write-Host "Checking Demo Blog..." -ForegroundColor Yellow
+kubectl exec -n blog-demo-dev $(kubectl get pods -n blog-demo-dev -l "app.kubernetes.io/name=blog-template,component=backend" -o jsonpath="{.items[0].metadata.name}") -- node -e "
+const { DataSource } = require('typeorm');
+const { mySqlDataSourceOptions } = require('./dist/providers/database/datasource.js');
+
+async function verify() {
+    const dataSource = new DataSource(mySqlDataSourceOptions);
+    await dataSource.initialize();
+    const result = await dataSource.query('SELECT COUNT(*) as count FROM blog_posts');
+    console.log('Demo Blog Posts:', result[0].count);
+    await dataSource.destroy();
+}
+verify().catch(console.error);
+"
+```
+
+**Access Seeded Data:**
+- **Demo Blog**: http://demo.dev.local:8080/
+- **My Company Blog**: http://mycomponay.local:8080/
+- **Tech Blog**: http://tech.local:8080/
+
+Each blog will display 100 sample blog posts with random hacker-themed content generated by Faker.js.
+
 ## Management Commands
 
 ### List All Clients
@@ -253,6 +423,70 @@ kubectl scale deployment acme-corp-backend --replicas=5 -n blog-acme-corp-produc
 kubectl scale deployment tech-startup-backend --replicas=3 -n blog-tech-startup-production
 ```
 
+## SSL/TLS Configuration
+
+### Local Development with HTTPS
+
+The system supports SSL/TLS certificates for secure local development using `mkcert`:
+
+#### Automatic Setup
+```powershell
+# Run the complete SSL setup
+.\setup-ssl-complete.ps1
+```
+
+#### Manual Setup
+```powershell
+# Install mkcert
+choco install mkcert -y
+
+# Install local CA
+mkcert -install
+
+# Generate certificates
+mkcert -cert-file ssl-certificates/blog-cert.pem -key-file ssl-certificates/blog-key.pem demo.dev.local tech.local meow.dev.local localhost
+
+# Create Kubernetes secret
+kubectl create secret tls blog-ssl-cert --cert=ssl-certificates/blog-cert.pem --key=ssl-certificates/blog-key.pem -n traefik-system
+```
+
+#### Accessing Blogs with HTTPS
+- **Demo Blog**: `https://demo.dev.local:8080/`
+- **Tech Blog**: `https://tech.local:8080/`
+- **Meow Blog**: `https://meow.dev.local:8080/`
+
+#### SSL Features
+- ✅ **Automatic HTTP→HTTPS redirect**
+- ✅ **Trusted certificates** (no browser warnings)
+- ✅ **Wildcard support** for subdomains
+- ✅ **Auto-renewal** via mkcert
+- ✅ **Production-ready** configuration
+
+### Production SSL Setup
+
+For production deployments, use cert-manager with Let's Encrypt:
+
+```yaml
+# Install cert-manager
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.0/cert-manager.yaml
+
+# Configure Let's Encrypt issuer
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: your-email@example.com
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    solvers:
+    - http01:
+        ingress:
+          class: traefik
+```
+
 ## Troubleshooting
 
 ### PowerShell Execution Policy
@@ -285,6 +519,76 @@ kubectl get events -n blog-acme-corp-production --sort-by='.lastTimestamp'
 # Delete port registry and regenerate
 Remove-Item used-ports.json -ErrorAction SilentlyContinue
 .\template-generator\Generate-ClientDeployment.ps1 -ClientName "acme-corp" -Environment "production"
+```
+
+### Database Issues
+
+**Table Not Found Error:**
+```powershell
+# If you get "Table 'blog_db.blog_posts' doesn't exist"
+# Run the database setup script
+.\setup-databases-working.ps1
+```
+
+**Seeding Fails:**
+```powershell
+# Check if backend pods are running
+kubectl get pods -n blog-demo-dev -l "app.kubernetes.io/name=blog-template,component=backend"
+
+# Check backend logs for errors
+kubectl logs -n blog-demo-dev deployment/demo-backend --tail=20
+
+# Verify database connection
+kubectl exec -n blog-demo-dev $(kubectl get pods -n blog-demo-dev -l "app.kubernetes.io/name=blog-template,component=backend" -o jsonpath="{.items[0].metadata.name}") -- node -e "
+const { DataSource } = require('typeorm');
+const { mySqlDataSourceOptions } = require('./dist/providers/database/datasource.js');
+
+async function testConnection() {
+    try {
+        const dataSource = new DataSource(mySqlDataSourceOptions);
+        await dataSource.initialize();
+        console.log('Database connection successful');
+        await dataSource.destroy();
+    } catch (error) {
+        console.error('Database connection failed:', error.message);
+    }
+}
+testConnection();
+"
+```
+
+**Empty Blog Lists:**
+```powershell
+# Check if data exists in database
+kubectl exec -n blog-demo-dev $(kubectl get pods -n blog-demo-dev -l "app.kubernetes.io/name=blog-template,component=backend" -o jsonpath="{.items[0].metadata.name}") -- node -e "
+const { DataSource } = require('typeorm');
+const { mySqlDataSourceOptions } = require('./dist/providers/database/datasource.js');
+
+async function checkData() {
+    const dataSource = new DataSource(mySqlDataSourceOptions);
+    await dataSource.initialize();
+    const result = await dataSource.query('SELECT COUNT(*) as count FROM blog_posts');
+    console.log('Blog posts count:', result[0].count);
+    
+    if (result[0].count === 0) {
+        console.log('No data found. Run: .\\setup-databases-working.ps1');
+    }
+    await dataSource.destroy();
+}
+checkData().catch(console.error);
+"
+```
+
+**MySQL Connection Refused:**
+```powershell
+# Check MySQL pod status
+kubectl get pods -n blog-demo-dev -l "app.kubernetes.io/name=blog-template,component=mysql"
+
+# Check MySQL logs
+kubectl logs -n blog-demo-dev deployment/demo-mysql --tail=20
+
+# Restart MySQL if needed
+kubectl rollout restart deployment/demo-mysql -n blog-demo-dev
 ```
 
 ## CI/CD Integration
@@ -380,3 +684,64 @@ After deployment, verify:
 5. **Scale Infrastructure**: Add more nodes as you add clients
 
 This multi-tenant blog platform provides complete isolation between clients with automatic port allocation, secret generation, and scalable architecture for unlimited client deployments.
+
+## Quick Reference
+
+### Essential Commands
+
+**System Setup:**
+```powershell
+# Complete system setup
+.\setup-fresh-machine.ps1
+
+# Database setup and seeding
+.\setup-databases-working.ps1
+
+# Update hosts file (run as Administrator)
+.\update-hosts.ps1
+
+# Start dashboard server
+node command-runner.js
+```
+
+**Access Points:**
+- **Dashboard**: http://localhost:3001/
+- **Demo Blog**: http://demo.dev.local:8080/
+- **My Company Blog**: http://mycomponay.local:8080/
+- **Tech Blog**: http://tech.local:8080/
+
+**Port Forwarding (Alternative Access):**
+```powershell
+# Demo blog
+kubectl port-forward -n blog-demo-dev service/demo-frontend 8081:80
+
+# My Company blog  
+kubectl port-forward -n blog-my-company-dev service/my-company-frontend 8083:80
+
+# Tech blog
+kubectl port-forward -n blog-tech-blog-dev service/tech-blog-frontend 8084:80
+```
+
+**Database Operations:**
+```powershell
+# Check blog post count
+kubectl exec -n blog-demo-dev $(kubectl get pods -n blog-demo-dev -l "app.kubernetes.io/name=blog-template,component=backend" -o jsonpath="{.items[0].metadata.name}") -- node -e "const { DataSource } = require('typeorm'); const { mySqlDataSourceOptions } = require('./dist/providers/database/datasource.js'); async function count() { const ds = new DataSource(mySqlDataSourceOptions); await ds.initialize(); const result = await ds.query('SELECT COUNT(*) as count FROM blog_posts'); console.log('Posts:', result[0].count); await ds.destroy(); } count().catch(console.error);"
+
+# Re-seed specific blog
+kubectl exec -n blog-demo-dev $(kubectl get pods -n blog-demo-dev -l "app.kubernetes.io/name=blog-template,component=backend" -o jsonpath="{.items[0].metadata.name}") -- npm run seed
+```
+
+**Troubleshooting:**
+```powershell
+# Check all pods
+kubectl get pods --all-namespaces | Select-String "blog"
+
+# Check specific blog status
+kubectl get all -n blog-demo-dev
+
+# View logs
+kubectl logs -n blog-demo-dev deployment/demo-backend --tail=20
+
+# Restart services
+kubectl rollout restart deployment/demo-backend -n blog-demo-dev
+```

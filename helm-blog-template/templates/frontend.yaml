@@ -39,12 +39,15 @@ spec:
       - name: frontend
         image: "{{ .Values.images.frontend.repository }}:{{ .Values.images.frontend.tag }}"
         imagePullPolicy: {{ .Values.images.frontend.pullPolicy }}
+        command: ["/docker-entrypoint-custom.sh"]
         ports:
         - containerPort: {{ .Values.ports.frontend.internal }}
           name: http
         env:
         - name: BACKEND_URL
           value: "http://{{ include "blog-template.backend.serviceName" . }}:{{ .Values.ports.backend.internal }}"
+        - name: BACKEND_SERVICE
+          value: "{{ include "blog-template.backend.serviceName" . }}"
         - name: CLIENT_NAME
           valueFrom:
             configMapKeyRef:
@@ -55,14 +58,12 @@ spec:
             configMapKeyRef:
               name: {{ include "blog-template.fullname" . }}-config
               key: CLIENT_DOMAIN
-        {{- if .Values.security.containerSecurityContext.enabled }}
         securityContext:
-          allowPrivilegeEscalation: {{ .Values.security.containerSecurityContext.allowPrivilegeEscalation }}
-          readOnlyRootFilesystem: {{ .Values.security.containerSecurityContext.readOnlyRootFilesystem }}
-          runAsNonRoot: {{ .Values.security.containerSecurityContext.runAsNonRoot }}
-          capabilities:
-            drop: {{ .Values.security.containerSecurityContext.capabilities.drop | toYaml | nindent 14 }}
-        {{- end }}
+          # The custom entrypoint writes nginx.conf under /etc/nginx; require root
+          runAsUser: 0
+          runAsGroup: 0
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
         {{- if .Values.resources.frontend }}
         resources:
           {{- toYaml .Values.resources.frontend | nindent 10 }}

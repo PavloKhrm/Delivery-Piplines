@@ -68,6 +68,12 @@ http {
                 add_header Content-Length 0;
                 return 204;
             }
+            
+            # Inject blog title into HTML
+            sub_filter '<title>Blog System</title>' '<title>$CLIENT_NAME Blog</title>';
+            sub_filter '<div id="app"></div>' '<div id="app"></div><script>window.BLOG_TITLE = "$CLIENT_NAME";</script>';
+            sub_filter_once on;
+            
             try_files $uri $uri/ /index.html;
         }
         

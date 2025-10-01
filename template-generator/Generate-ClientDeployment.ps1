@@ -56,7 +56,10 @@ param(
     [string]$BitbucketRepo,
     
     [Parameter(Mandatory = $false)]
-    [switch]$DryRun
+    [switch]$DryRun,
+
+    [Parameter(Mandatory = $false, HelpMessage = "Skip confirmations and regenerate non-interactively")]
+    [switch]$Force
 )
 
 # Configuration
@@ -299,6 +302,29 @@ env:
     jwtSecret: "$($ClientConfig.secrets.JwtSecret)"
     sessionSecret: "$($ClientConfig.secrets.SessionSecret)"
 
+    # Health checks
+    healthChecks:
+      enabled: true
+      backend:
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+
+    # SSL/TLS configuration
+    ssl:
+      enabled: true
+      certResolver: default
+      redirectHttpToHttps: true
+
 # Environment-specific settings
 $(if ($ClientConfig.environment -eq "production") {
 @"
@@ -459,21 +485,26 @@ echo "Deploying $($ClientConfig.name) to $($ClientConfig.environment)..."
 
 # Build and load images into Kind
 echo "Building Docker images..."
-docker build -t blog-backend:$($ClientConfig.name) ../../basic-blog/basic-backend/
-docker build -t blog-frontend:$($ClientConfig.name) ../../basic-blog/basic-frontend/
+docker build -t blog-backend:latest `$PSScriptRoot/../../basic-blog/basic-backend/
+docker build -t blog-frontend:latest `$PSScriptRoot/../../basic-blog/basic-frontend/
 
 echo "Loading images into Kind cluster..."
-kind load docker-image blog-backend:$($ClientConfig.name) --name k8s-blog-template
-kind load docker-image blog-frontend:$($ClientConfig.name) --name k8s-blog-template
+kind load docker-image blog-backend:latest --name k8s-blog-template
+kind load docker-image blog-frontend:latest --name k8s-blog-template
 
 # Deploy with Helm
 echo "Deploying with Helm..."
-helm upgrade --install $($ClientConfig.name) ../../helm-blog-template \
-  --namespace $($ClientConfig.namespace) \
-  --create-namespace \
-  --values values.yaml \
-  --wait \
-  --timeout=10m
+Push-Location `$PSScriptRoot
+try {
+    helm upgrade --install $($ClientConfig.name) ../../helm-blog-template \
+      --namespace $($ClientConfig.namespace) \
+      --create-namespace \
+      --values values.yaml \
+      --wait \
+      --timeout=10m
+} finally {
+    Pop-Location
+}
 
 echo "Deployment completed successfully!"
 echo "Access your application at: http://$($ClientConfig.domain)"
@@ -498,19 +529,19 @@ Write-Host "Deploying $($ClientConfig.name) to $($ClientConfig.environment)..." 
 
 # Build and load images into Kind
 Write-Host "Building Docker images..." -ForegroundColor Yellow
-docker build -t blog-backend:$($ClientConfig.name) ../../basic-blog/basic-backend/
-docker build -t blog-frontend:$($ClientConfig.name) ../../basic-blog/basic-frontend/
+docker build -t blog-backend:latest `$PSScriptRoot/../../basic-blog/basic-backend/
+docker build -t blog-frontend:latest `$PSScriptRoot/../../basic-blog/basic-frontend/
 
 Write-Host "Loading images into Kind cluster..." -ForegroundColor Yellow
-kind load docker-image blog-backend:$($ClientConfig.name) --name k8s-blog-template
-kind load docker-image blog-frontend:$($ClientConfig.name) --name k8s-blog-template
+kind load docker-image blog-backend:latest --name k8s-blog-template
+kind load docker-image blog-frontend:latest --name k8s-blog-template
 
 # Deploy with Helm
 Write-Host "Deploying with Helm..." -ForegroundColor Yellow
-helm upgrade --install $($ClientConfig.name) ../../helm-blog-template ``
+helm upgrade --install $($ClientConfig.name) `$PSScriptRoot/../../helm-blog-template ``
   --namespace $($ClientConfig.namespace) ``
   --create-namespace ``
-  --values values.yaml ``
+  --values `$PSScriptRoot/values.yaml ``
   --wait ``
   --timeout=10m
 
@@ -571,10 +602,14 @@ try {
     $existingClients = Get-ClientsConfig
     if ($existingClients.ContainsKey($ClientName)) {
         Write-Warning "Client '$ClientName' already exists!"
-        $response = Read-Host "Do you want to regenerate? (y/N)"
-        if ($response -ne "y" -and $response -ne "Y") {
-            Write-Info "Operation cancelled"
-            exit 0
+        if (-not $Force) {
+            $response = Read-Host "Do you want to regenerate? (y/N)"
+            if ($response -ne "y" -and $response -ne "Y") {
+                Write-Info "Operation cancelled"
+                exit 0
+            }
+        } else {
+            Write-Info "Force flag detected. Proceeding to regenerate without prompt."
         }
     }
     
