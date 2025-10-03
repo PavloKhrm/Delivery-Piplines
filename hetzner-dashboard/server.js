@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
 import * as hc from "./hetzner.js";
+import { attachSshWs } from "./ws-ssh.js";
 
 dotenv.config();
 
@@ -81,6 +82,9 @@ app.get("/api/clients", async (_req, res) => {
 
 app.use(express.static(path.join(__dirname, "public")));
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Dashboard → http://localhost:${PORT}`);
 });
+
+
+attachSshWs({ server, panelUser: PANEL_USER, panelPass: PANEL_PASS });
