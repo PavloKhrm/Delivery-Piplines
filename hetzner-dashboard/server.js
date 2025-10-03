@@ -1,9 +1,8 @@
-// server.js
 import express from "express";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
-import * as hc from "./hetzner.js"; // вся бизнес-логика тут
+import * as hc from "./hetzner.js";
 
 dotenv.config();
 
@@ -13,7 +12,7 @@ const __dirname = path.dirname(__filename);
 const {
   PORT = 3000,
   PANEL_USER = "admin",
-  PANEL_PASS = "admin",
+  PANEL_PASS = "admin"
 } = process.env;
 
 const app = express();
@@ -79,7 +78,6 @@ app.get("/api/clients", async (_req, res) => {
     res.status(500).json({ error: String(e.message || e) });
   }
 });
-
 
 app.use(express.static(path.join(__dirname, "public")));
 
