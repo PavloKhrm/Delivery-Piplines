@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>Site Frontend</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="wrap">
+    <h1>Frontend ✓</h1>
+    <p>This page is served by Nginx. Buttons call the backend via <code>/api/*</code>.</p>
+
+    <section class="card">
+      <h3>API test</h3>
+      <div class="row">
+        <button id="btn-health">GET /api/health</button>
+        <button id="btn-time">GET /api/time</button>
+        <button id="btn-echo">POST /api/echo</button>
+      </div>
+      <pre id="out" class="mono">click a button</pre>
+    </section>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>
