@@ -39,8 +39,7 @@
 
 4. Open the repo root (/basic-log) and create a cluster: **kind create cluster --config kind-config.yaml**
 
-5. Follow this step strictly to ensure nothing weird happens
- - kind create cluster --config kind-config.yaml
+5. Follow this two steps strictly to ensure nothing weird happens - two steps ahead!
  - helm install traefik traefik/traefik -f traefik-values.yaml
  - kubectl label namespace default ingress=allow namespace/default labeled
 
