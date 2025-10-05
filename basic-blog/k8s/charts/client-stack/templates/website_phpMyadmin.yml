@@ -41,9 +41,9 @@ kind: Ingress
 metadata:
   name: {{ .Release.Name }}-phpmyadmin
   annotations:
-    kubernetes.io/ingress.class: {{ .Values.ingressClassName | default "traefik" }}   # backward compatible
+    kubernetes.io/ingress.class: {{ .Values.ingressClassName | default "traefik" }} 
 spec:
-  ingressClassName: {{ .Values.ingressClassName | default "traefik" }}                # preferred
+  ingressClassName: {{ .Values.ingressClassName | default "traefik" }}            
   rules:
     - host: phpmyadmin.{{ .Values.clientId }}.{{ .Values.baseDomain }}
       http:

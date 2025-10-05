@@ -39,15 +39,10 @@
 
 4. Open the repo root (/basic-log) and create a cluster: **kind create cluster --config kind-config.yaml**
 
-5. Install Traefik
- - Open the terminal
- - **helm repo add traefik https://traefik.github.io/charts**
- - **helm repo update**
- - **helm install traefik traefik/traefik -f traefik-values.yaml**
-
-6. Allow Ingress Traffic
- - Open the terminal
- - **kubectl label namespace default ingress=allow**
+5. Follow this step strictly to ensure nothing weird happens
+ - kind create cluster --config kind-config.yaml
+ - helm install traefik traefik/traefik -f traefik-values.yaml
+ - kubectl label namespace default ingress=allow namespace/default labeled
 
 
 ## Working Instruction
