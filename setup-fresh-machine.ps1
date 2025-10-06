@@ -80,15 +80,19 @@ function Invoke-CommandWithLogging {
     Write-Log "Command: $Command" "DEBUG" "Gray"
     
     try {
-        $output = Invoke-Expression $Command 2>&1
-        if ($LASTEXITCODE -eq 0) {
+        # Use call operator to avoid PowerShell exceptions for non-zero exit codes
+        $output = & cmd /c "$Command 2>&1"
+        $exitCode = $LASTEXITCODE
+        
+        if ($exitCode -eq 0) {
             Write-Log "SUCCESS: $Description" "SUCCESS" "Green"
             if ($output) {
                 Write-Log "Output: $output" "DEBUG" "Gray"
             }
         } else {
-            Write-Log "ERROR: $Description failed with exit code $LASTEXITCODE" "ERROR" "Red"
+            Write-Log "ERROR: $Description failed with exit code $exitCode" "ERROR" "Red"
             Write-Log "Error output: $output" "ERROR" "Red"
+            throw "Command failed with exit code $exitCode"
         }
         return $output
     } catch {
