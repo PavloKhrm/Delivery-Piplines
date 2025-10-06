@@ -19,7 +19,16 @@ Write-Host "Step 3: Restore on new machine" -ForegroundColor Yellow
 $continue = Read-Host "`nDo you want to create a backup now? (y/n)"
 if ($continue -eq "y" -or $continue -eq "Y") {
     Write-Host "`nCreating backup..." -ForegroundColor Cyan
-    .\backup-system-simple.ps1 -BackupName $BackupName
+    
+    # Try to find backup script in Tools directory first, then current directory
+    if (Test-Path ".\Tools\backup-system-simple.ps1") {
+        .\Tools\backup-system-simple.ps1 -BackupName $BackupName
+    } elseif (Test-Path ".\backup-system-simple.ps1") {
+        .\backup-system-simple.ps1 -BackupName $BackupName
+    } else {
+        Write-Host "Backup script not found. Please ensure backup-system-simple.ps1 is available." -ForegroundColor Red
+        exit 1
+    }
     
     Write-Host "`nBackup created successfully!" -ForegroundColor Green
     Write-Host "`nNext steps for migration:" -ForegroundColor Cyan
@@ -28,11 +37,11 @@ if ($continue -eq "y" -or $continue -eq "Y") {
     Write-Host "   choco install docker-desktop kubernetes-cli kind kubernetes-helm nodejs npm git -y" -ForegroundColor Gray
     Write-Host "3. Clone the repository on new machine" -ForegroundColor White
     Write-Host "4. Copy backup folder to .\backups\ directory" -ForegroundColor White
-    Write-Host "5. Run: .\restore-system.ps1 -BackupName `"$BackupName`" -FreshMachine" -ForegroundColor White
+    Write-Host "5. Run: .\Tools\restore-system.ps1 -BackupName `"$BackupName`" -FreshMachine" -ForegroundColor White
     
     Write-Host "`nBackup location: .\backups\$BackupName-[timestamp]" -ForegroundColor Yellow
 } else {
     Write-Host "`nMigration cancelled." -ForegroundColor Yellow
     Write-Host "`nTo create backup manually, run:" -ForegroundColor Cyan
-    Write-Host ".\backup-system-simple.ps1 -BackupName `"your-backup-name`"" -ForegroundColor White
+    Write-Host ".\Tools\backup-system-simple.ps1 -BackupName `"your-backup-name`"" -ForegroundColor White
 }

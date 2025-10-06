@@ -71,10 +71,10 @@ Wait-ForDocker
 
 # Step 3: Create Kind cluster
 Write-Host "`n Creating Kind Kubernetes cluster..." -ForegroundColor Cyan
-try {
-    $null = kind get clusters | Select-String "k8s-blog-template"
+$clusters = kind get clusters 2>$null
+if ($clusters -match "k8s-blog-template") {
     Write-Host " Cluster 'k8s-blog-template' already exists" -ForegroundColor Green
-} catch {
+} else {
     Write-Host "Creating new cluster..." -ForegroundColor Yellow
     kind create cluster --name k8s-blog-template
     Write-Host " Kind cluster created successfully" -ForegroundColor Green
@@ -93,33 +93,69 @@ try {
 
 # Step 5: Build Docker images
 Write-Host "`n Building Docker images..." -ForegroundColor Cyan
-Write-Host "Building backend image..." -ForegroundColor Yellow
-docker build -t blog-backend:latest .\basic-blog\basic-backend\
 
-Write-Host "Building frontend image..." -ForegroundColor Yellow
-docker build -t blog-frontend:latest .\basic-blog\basic-frontend\
+# Check if basic-blog directory exists
+if (Test-Path ".\basic-blog\basic-backend\") {
+    Write-Host "Building backend image..." -ForegroundColor Yellow
+    docker build -t blog-backend:latest .\basic-blog\basic-backend\
+} else {
+    Write-Host "Backend directory not found, skipping backend build" -ForegroundColor Yellow
+}
+
+if (Test-Path ".\basic-blog\basic-frontend\") {
+    Write-Host "Building frontend image..." -ForegroundColor Yellow
+    docker build -t blog-frontend:latest .\basic-blog\basic-frontend\
+} else {
+    Write-Host "Frontend directory not found, skipping frontend build" -ForegroundColor Yellow
+}
 
 Write-Host " Docker images built successfully" -ForegroundColor Green
 
 # Step 6: Load images into Kind
 Write-Host "`n Loading images into Kind cluster..." -ForegroundColor Cyan
-kind load docker-image blog-backend:latest --name k8s-blog-template
-kind load docker-image blog-frontend:latest --name k8s-blog-template
+
+# Check if images exist before loading
+$backendImage = docker images -q blog-backend:latest 2>$null
+$frontendImage = docker images -q blog-frontend:latest 2>$null
+
+if ($backendImage) {
+    kind load docker-image blog-backend:latest --name k8s-blog-template
+    Write-Host " Backend image loaded" -ForegroundColor Green
+} else {
+    Write-Host " Backend image not found, skipping" -ForegroundColor Yellow
+}
+
+if ($frontendImage) {
+    kind load docker-image blog-frontend:latest --name k8s-blog-template
+    Write-Host " Frontend image loaded" -ForegroundColor Green
+} else {
+    Write-Host " Frontend image not found, skipping" -ForegroundColor Yellow
+}
+
 Write-Host " Images loaded into Kind cluster" -ForegroundColor Green
 
 # Step 7: Install dashboard dependencies
 Write-Host "`n Installing dashboard dependencies..." -ForegroundColor Cyan
-if (Test-Path "package.json") {
+
+# Navigate to Dashboard directory if it exists
+if (Test-Path ".\Dashboard\package.json") {
+    Set-Location -Path ".\Dashboard"
+    npm install
+    Set-Location -Path ".."
+    Write-Host " Dashboard dependencies installed" -ForegroundColor Green
+} elseif (Test-Path "package.json") {
     npm install express
+    Write-Host " Dashboard dependencies installed" -ForegroundColor Green
 } else {
-    npm init -y
-    npm install express
+    Write-Host " No package.json found, skipping npm install" -ForegroundColor Yellow
 }
-Write-Host " Dashboard dependencies installed" -ForegroundColor Green
 
 # Step 8: Create backup
 Write-Host "`n Creating system backup..." -ForegroundColor Cyan
-if (Test-Path "backup-system.ps1") {
+if (Test-Path ".\Tools\backup-system.ps1") {
+    .\Tools\backup-system.ps1 -BackupName $BackupName
+    Write-Host " System backup created: $BackupName" -ForegroundColor Green
+} elseif (Test-Path "backup-system.ps1") {
     .\backup-system.ps1 -BackupName $BackupName
     Write-Host " System backup created: $BackupName" -ForegroundColor Green
 } else {
@@ -138,7 +174,7 @@ Write-Host " Traefik load balancer: Installed" -ForegroundColor Green
 Write-Host " Docker images: Built and loaded" -ForegroundColor Green
 Write-Host " Dashboard: Ready to start" -ForegroundColor Green
 Write-Host "`n Next Steps:" -ForegroundColor Cyan
-Write-Host "1. Start the dashboard: node command-runner.js" -ForegroundColor White
+Write-Host "1. Start the dashboard: cd Dashboard; node command-runner.js" -ForegroundColor White
 Write-Host "2. Open: http://localhost:3001/multi-blog-dashboard.html" -ForegroundColor White
 Write-Host "3. Create your first blog using the dashboard!" -ForegroundColor White
 Write-Host "`n For more information, see README.md" -ForegroundColor Cyan
@@ -149,5 +185,13 @@ if ($startDashboard -eq "y" -or $startDashboard -eq "Y") {
     Write-Host "`n Starting dashboard..." -ForegroundColor Green
     Write-Host "Dashboard running at: http://localhost:3001/multi-blog-dashboard.html" -ForegroundColor Cyan
     Write-Host "Press Ctrl+C to stop the dashboard" -ForegroundColor Yellow
-    node command-runner.js
+    
+    # Navigate to Dashboard directory if it exists
+    if (Test-Path ".\Dashboard\command-runner.js") {
+        Set-Location -Path ".\Dashboard"
+        node command-runner.js
+    } else {
+        Write-Host "Dashboard not found in expected location" -ForegroundColor Red
+        Write-Host "Please run: cd Dashboard; node command-runner.js" -ForegroundColor Yellow
+    }
 }
