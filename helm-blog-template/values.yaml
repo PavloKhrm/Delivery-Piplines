@@ -177,8 +177,7 @@ services:
 ingress:
   enabled: true
   className: "traefik"
-  annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: "default-auth@kubernetescrd"
+  annotations: {}
   tls:
     enabled: true
     secretName: ""

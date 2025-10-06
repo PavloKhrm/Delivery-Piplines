@@ -38,6 +38,24 @@
 3. **Access dashboard**
    - Open http://localhost:3001/multi-blog-dashboard.html
 
+### After PC Restart
+
+If your blog websites are not accessible after restarting your PC:
+
+1. **Quick Fix (Recommended)**
+   - Double-click `restore-after-restart.bat`
+   - Wait for restoration to complete
+   - Start dashboard: `node command-runner.js`
+
+2. **Port Forwarding Only**
+   - Double-click `fix-ports.bat`
+   - This only fixes port forwarding issues
+
+3. **Manual Steps**
+   - Start Docker Desktop
+   - Run `restore-after-restart.ps1`
+   - Start dashboard: `node command-runner.js`
+
 ### Troubleshooting
 
 #### PowerShell Execution Policy Issues
@@ -81,6 +99,8 @@ docker system prune -a
 
 - `install-prerequisites.bat` - Install all required tools (run as Administrator)
 - `start-system.bat` - Start the system (handles all setup automatically)
+- `restore-after-restart.bat` - **Restore system after PC restart** (most common use)
+- `fix-ports.bat` - Fix port forwarding issues only
 - `setup-team.bat` - Alternative setup method
 - `TEAM-SETUP.md` - Detailed team setup guide
 - `README.md` - Main documentation

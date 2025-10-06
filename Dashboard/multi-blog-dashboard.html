@@ -316,9 +316,16 @@
         let allBlogs = [];
         let allNamespaces = [];
 
-        function getBlogDomain(clientName) {
-            // Map client names to their actual domains
+        function getBlogDomain(clientName, customDomain = null) {
+            // Use custom domain if provided, otherwise map client names to their actual domains
+            if (customDomain) {
+                return customDomain;
+            }
+            
             const domainMap = {
+                'demo-dev': 'demo-dev.local',
+                'emit-it': 'emit-it.dev.local', 
+                'tech-blog2': 'tech-blog2.local',
                 'demo': 'demo.dev.local',
                 'tech-blog': 'tech.local',
                 'my-company': 'mycomponay.local',
@@ -397,7 +404,31 @@
                 const deployCmd = `powershell -ExecutionPolicy Bypass -File "deployments/${clientName}/deploy.ps1" -Force`;
                 await runCommand(deployCmd);
 
-                showStatusMessage(`Blog website "${clientName}" created successfully!`, "success");
+                // Wait for deployment to be ready
+                showStatusMessage("Waiting for blog deployment to be ready...", "info");
+                await new Promise(resolve => setTimeout(resolve, 10000)); // Wait 10 seconds
+
+                // Automatically fix problematic ingress annotations
+                showStatusMessage("Fixing ingress configuration...", "info");
+                const namespace = `blog-${clientName}-${environment}`;
+                const ingressName = `${clientName}-blog-template-ingress`;
+                
+                // Fix problematic annotations that cause 404 errors
+                const problematicAnnotations = [
+                    'traefik.ingress.kubernetes.io/router.middlewares',
+                    'traefik.ingress.kubernetes.io/router.rule'
+                ];
+                
+                for (const annotation of problematicAnnotations) {
+                    const fixCmd = `kubectl annotate ingress ${ingressName} -n ${namespace} ${annotation}- --overwrite`;
+                    await runCommand(fixCmd);
+                }
+                
+                // Wait a bit more for Traefik to pick up the changes
+                await new Promise(resolve => setTimeout(resolve, 5000));
+
+                const finalDomain = domain || `${clientName}.local`;
+                showStatusMessage(`Blog website "${clientName}" created successfully! Visit: https://${finalDomain}:8443`, "success");
                 
                 // Clear form
                 document.getElementById('client-name').value = '';
@@ -441,10 +472,54 @@
                         
                         if (podsResponse.ok && podsData.output) {
                             const pods = JSON.parse(podsData.output).items;
+                            const clientName = namespace.replace('blog-', '').replace(/-dev$|^-staging$|^-production$/, '');
+                            
+                            // Try to get custom domain from ingress and fix any problematic annotations
+                            let customDomain = null;
+                            try {
+                                const ingressCmd = `kubectl get ingress -n ${namespace} -o json`;
+                                const ingressResponse = await fetch('/run-command', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ command: ingressCmd })
+                                });
+                                const ingressData = await ingressResponse.json();
+                                if (ingressResponse.ok && ingressData.output) {
+                                    const ingresses = JSON.parse(ingressData.output).items;
+                                    if (ingresses.length > 0 && ingresses[0].spec.rules && ingresses[0].spec.rules.length > 0) {
+                                        customDomain = ingresses[0].spec.rules[0].host;
+                                        
+                                        // Fix problematic annotations for new ingresses
+                                        const ingressName = ingresses[0].metadata.name;
+                                        const annotations = ingresses[0].metadata.annotations || {};
+                                        
+                                        // Remove problematic annotations that cause routing issues
+                                        const problematicAnnotations = [
+                                            'traefik.ingress.kubernetes.io/router.middlewares',
+                                            'traefik.ingress.kubernetes.io/router.rule'
+                                        ];
+                                        
+                                        for (const annotation of problematicAnnotations) {
+                                            if (annotations[annotation]) {
+                                                const fixCmd = `kubectl annotate ingress ${ingressName} -n ${namespace} ${annotation}- --overwrite`;
+                                                fetch('/run-command', {
+                                                    method: 'POST',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    body: JSON.stringify({ command: fixCmd })
+                                                }).catch(() => {}); // Ignore errors
+                                            }
+                                        }
+                                    }
+                                }
+                            } catch (e) {
+                                // Ignore errors getting custom domain
+                            }
+                            
                             allBlogsData.push({
                                 namespace: namespace,
                                 pods: pods,
-                                clientName: namespace.replace('blog-', '').replace(/-dev$|^-staging$|^-production$/, '')
+                                clientName: clientName,
+                                customDomain: customDomain
                             });
                         }
                     }
@@ -482,11 +557,11 @@
                     <div class="blog-info">
                         <div><span>Namespace:</span> ${blog.namespace}</div>
                         <div><span>Pods:</span> ${runningPods}/${totalPods}</div>
-                        <div><span>Domain:</span> ${getBlogDomain(blog.clientName)}</div>
+                        <div><span>Domain:</span> ${getBlogDomain(blog.clientName, blog.customDomain)}</div>
                         <div><span>Age:</span> ${formatDuration(new Date() - new Date(blog.pods[0]?.metadata?.creationTimestamp || new Date()))}</div>
                     </div>
                     <div class="blog-actions">
-                        <a href="http://${getBlogDomain(blog.clientName)}:8080" target="_blank" class="btn">🌐 Visit Blog</a>
+                        <a href="https://${getBlogDomain(blog.clientName, blog.customDomain)}:8443" target="_blank" class="btn">🌐 Visit Blog</a>
                         <button class="btn secondary" onclick="scaleBlog('${blog.namespace}', 'backend')">📈 Scale Backend</button>
                         <button class="btn secondary" onclick="scaleBlog('${blog.namespace}', 'frontend')">📈 Scale Frontend</button>
                         <button class="btn danger" onclick="deleteBlog('${blog.namespace}')">🗑️ Delete</button>

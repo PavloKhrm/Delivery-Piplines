@@ -7,12 +7,12 @@ A comprehensive multi-tenant Kubernetes deployment system for isolated blog appl
 ## Team Setup
 
 For team members, see:
-- **[README-TEAM.md](README-TEAM.md)** - Quick team instructions
-- **[TEAM-SETUP.md](TEAM-SETUP.md)** - Detailed team setup guide
+- **[README-TEAM.md](instructions/README-TEAM.md)** - Quick team instructions
+- **[TEAM-SETUP.md](instructions/TEAM-SETUP.md)** - Detailed team setup guide
 
 **Quick Start for Team Members:**
-1. Run `install-prerequisites.bat` as Administrator (one-time setup)
-2. Run `start-system.bat` to start the system
+1. Run `setup-all.bat` as Administrator (installs prerequisites and bootstraps)
+2. Start dashboard: `cd Dashboard` then `node command-runner.js`
 3. Open http://localhost:3001/multi-blog-dashboard.html
 
 ## Quick Start (Fresh Machine)
@@ -51,8 +51,8 @@ choco install docker-desktop kubernetes-cli kind kubernetes-helm nodejs npm git 
 git clone <your-repo-url>
 cd Prototype_K8s_SecondAttempt
 
-# Run the automated setup script
-.\setup-fresh-machine.ps1
+# Run the automated setup script (batch wrapper)
+.\setup-all.bat
 ```
 
 ### Manual Setup (Step by Step)
@@ -73,13 +73,12 @@ docker build -t blog-frontend:latest .\basic-blog\basic-frontend\
 kind load docker-image blog-backend:latest --name k8s-blog-template
 kind load docker-image blog-frontend:latest --name k8s-blog-template
 
-# 5. Install dashboard dependencies
-npm install express
-
-# 6. Start the multi-blog dashboard
+# 5. Start the multi-blog dashboard
+cd Dashboard
+npm install
 node command-runner.js
 
-# 7. Access dashboard at http://localhost:3001/multi-blog-dashboard.html
+# 6. Access dashboard at http://localhost:3001/multi-blog-dashboard.html
 ```
 
 ## Multi-Blog Dashboard
@@ -152,7 +151,7 @@ Access the web dashboard at `http://localhost:3001/multi-blog-dashboard.html` to
 #### Step 1: Create Backup on Source Machine
 ```powershell
 # On your current machine - Easy migration helper
-.\migrate-to-new-machine.ps1
+.\Tools\migrate-to-new-machine.ps1
 
 # Or create backup manually
 .\backup-system-simple.ps1 -BackupName "my-blog-system"
@@ -181,12 +180,13 @@ cd Prototype_K8s_SecondAttempt
 
 # Copy your backup folder to .\backups\ directory
 # Then restore the system
-.\restore-system.ps1 -BackupName "my-blog-system" -FreshMachine
+.\Tools\restore-system.ps1 -BackupName "my-blog-system" -FreshMachine
 ```
 
 #### Step 4: Verify Everything Works
 ```powershell
 # Start the dashboard
+cd Dashboard
 node command-runner.js
 
 # Open dashboard at http://localhost:3001/multi-blog-dashboard.html
@@ -213,11 +213,16 @@ kind load docker-image blog-frontend:latest --name k8s-blog-template
 ├── helm-blog-template/          # Helm chart templates
 ├── template-generator/          # Client management tools
 ├── deployments/                # Generated client configs
-├── multi-blog-dashboard.html    # Web management interface
-├── command-runner.js           # Dashboard backend server
-├── setup-fresh-machine.ps1     # Automated setup script
-├── backup-system.ps1           # Backup creation script
-└── restore-system.ps1          # Restore from backup script
+├── Dashboard/                  # Dashboard app
+│   ├── multi-blog-dashboard.html
+│   └── command-runner.js
+├── Tools/                      # Utilities and scripts
+│   ├── backup-system-simple.ps1
+│   ├── restore-system.ps1
+│   ├── migrate-to-new-machine.ps1
+│   └── update-hosts.ps1
+├── instructions/               # Documentation (except README.md)
+└── setup-all.bat               # Prerequisites installer and bootstrap
 ```
 
 ## Management Commands
@@ -225,6 +230,7 @@ kind load docker-image blog-frontend:latest --name k8s-blog-template
 ### Dashboard Management
 ```powershell
 # Start the multi-blog dashboard
+cd Dashboard
 node command-runner.js
 
 # Access dashboard
@@ -263,10 +269,10 @@ kubectl logs -f deployment/client-name-blog-template-backend -n blog-client-name
 3. Use the domain shown (e.g., `demo.dev.local`)
 
 ### Via Direct URLs
-- **Demo Blog**: `http://demo.dev.local:8080/` or `https://demo.dev.local:8080/`
-- **Tech Blog**: `http://tech.local:8080/` or `https://tech.local:8080/`
-- **Meow Blog**: `http://meow.dev.local:8080/` or `https://meow.dev.local:8080/`
-- **Custom Blogs**: `http://your-domain.local:8080/` or `https://your-domain.local:8080/`
+- Example frontends (limit 3 running at once due to local resource constraints):
+  - `https://demo-dev.local:8443/`
+  - `https://emit-it.dev.local:8443/`
+  - `https://tech-blog2.local:8443/`
 
 ### Hosts File Setup
 Add these entries to `C:\Windows\System32\drivers\etc\hosts`:
@@ -307,11 +313,9 @@ The multi-blog dashboard provides real-time monitoring of all deployed blogs:
 - **Log Access**: View logs for troubleshooting
 
 ### Current System Metrics
-- **18 Total Pods** running across all blog namespaces
-- **3 Complete Blog Stacks** (backend, frontend, mysql, redis, elasticsearch, mailcrab each)
-- **300+ Total Blog Posts** (100+ per blog with sample data)
-- **All Ingresses** configured with Traefik load balancer
-- **SSL Support** for secure local development
+- Up to 3 blog stacks supported concurrently on a typical dev laptop
+- Each stack includes: backend, frontend, mysql, redis, elasticsearch, mailcrab
+- Ingress via Traefik with HTTPS (self-signed) on port 8443
 
 ## Documentation
 
@@ -350,7 +354,9 @@ git clone <your-repo>
 cd Prototype_K8s_SecondAttempt
 # Copy backup to .\backups\ directory
 .\restore-system.ps1 -BackupName "migration-backup" -FreshMachine
-node command-runner.js
+Set-Location -Path .\Dashboard; npm install; node .\command-runner.js
+and then
+Start-Process http://localhost:3001/multi-blog-dashboard.html
 ```
 
 ### Fresh Machine Setup
@@ -374,11 +380,11 @@ choco install docker-desktop kubernetes-cli kind kubernetes-helm nodejs npm git 
 - **SSL Support**: HTTPS certificates configured for secure access
 
 ### Quick Access
-1. **Start Dashboard**: `node command-runner.js`
+1. **Start Dashboard**: `Set-Location -Path .\Dashboard; npm install; node .\command-runner.js`
+                        and then
+                        `Start-Process http://localhost:3001/multi-blog-dashboard.html`
 2. **Open Dashboard**: http://localhost:3001/multi-blog-dashboard.html
-3. **Visit Blogs**: 
-   - Demo: http://demo.dev.local:8080/
-   - Tech: http://tech.local:8080/
+
 
 ## License
 

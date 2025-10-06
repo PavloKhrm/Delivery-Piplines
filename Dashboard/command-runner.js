@@ -4,9 +4,10 @@ const path = require('path');
 
 const app = express();
 const PORT = 3001;
+const staticRoot = __dirname;
 
 app.use(express.json());
-app.use(express.static('.'));
+app.use(express.static(staticRoot));
 
 app.post('/run-command', (req, res) => {
     const { command } = req.body;
@@ -18,7 +19,7 @@ app.post('/run-command', (req, res) => {
     console.log(`Executing: ${command}`);
     
     exec(command, { 
-        cwd: process.cwd(),
+        cwd: path.resolve(staticRoot, '..'),
         shell: 'powershell.exe',
         maxBuffer: 1024 * 1024 * 10 // 10MB buffer
     }, (error, stdout, stderr) => {
