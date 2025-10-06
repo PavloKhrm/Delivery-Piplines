@@ -190,10 +190,16 @@ try {
     Invoke-CommandWithLogging "helm repo add traefik https://traefik.github.io/charts" "Add Traefik Helm repository"
     Invoke-CommandWithLogging "helm repo update" "Update Helm repositories"
     
-    # Install Traefik without --wait flag to avoid timeout issues
-    Write-Log "Installing Traefik (this may take a few minutes)..." "INFO" "Yellow"
-    Invoke-CommandWithLogging "helm install traefik traefik/traefik --namespace traefik-system --create-namespace" "Install Traefik"
-    Write-Log " Traefik installation initiated successfully" "SUCCESS" "Green"
+    # Check if Traefik is already installed
+    $traefikCheck = & helm list -n traefik-system 2>$null | Select-String "traefik"
+    if ($traefikCheck) {
+        Write-Log " Traefik is already installed" "SUCCESS" "Green"
+    } else {
+        # Install Traefik without --wait flag to avoid timeout issues
+        Write-Log "Installing Traefik (this may take a few minutes)..." "INFO" "Yellow"
+        Invoke-CommandWithLogging "helm install traefik traefik/traefik --namespace traefik-system --create-namespace" "Install Traefik"
+        Write-Log " Traefik installation initiated successfully" "SUCCESS" "Green"
+    }
     
     # Wait a bit for Traefik to start
     Write-Log "Waiting for Traefik pods to be ready..." "INFO" "Yellow"
@@ -230,7 +236,16 @@ if (Test-Path ".\basic-blog\basic-backend\") {
         Write-Log "Backend image build failed: $($_.Exception.Message)" "ERROR" "Red"
     }
 } else {
-    Write-Log "Backend directory not found, skipping backend build" "WARNING" "Yellow"
+    Write-Log "Backend directory not found, creating placeholder image..." "WARNING" "Yellow"
+    try {
+        # Create a simple placeholder backend image
+        Invoke-CommandWithLogging "docker run -d --name temp-backend nginx:alpine" "Create temporary container for image"
+        Invoke-CommandWithLogging "docker commit temp-backend blog-backend:latest" "Create backend placeholder image"
+        Invoke-CommandWithLogging "docker rm -f temp-backend" "Clean up temporary container"
+        Write-Log "Backend placeholder image created successfully" "SUCCESS" "Green"
+    } catch {
+        Write-Log "Failed to create backend placeholder image: $($_.Exception.Message)" "ERROR" "Red"
+    }
 }
 
 if (Test-Path ".\basic-blog\basic-frontend\") {
@@ -254,7 +269,16 @@ if (Test-Path ".\basic-blog\basic-frontend\") {
         Write-Log "Frontend image build failed: $($_.Exception.Message)" "ERROR" "Red"
     }
 } else {
-    Write-Log "Frontend directory not found, skipping frontend build" "WARNING" "Yellow"
+    Write-Log "Frontend directory not found, creating placeholder image..." "WARNING" "Yellow"
+    try {
+        # Create a simple placeholder frontend image
+        Invoke-CommandWithLogging "docker run -d --name temp-frontend nginx:alpine" "Create temporary container for image"
+        Invoke-CommandWithLogging "docker commit temp-frontend blog-frontend:latest" "Create frontend placeholder image"
+        Invoke-CommandWithLogging "docker rm -f temp-frontend" "Clean up temporary container"
+        Write-Log "Frontend placeholder image created successfully" "SUCCESS" "Green"
+    } catch {
+        Write-Log "Failed to create frontend placeholder image: $($_.Exception.Message)" "ERROR" "Red"
+    }
 }
 
 Write-Log " Docker images build process completed" "INFO" "Green"
