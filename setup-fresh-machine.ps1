@@ -152,11 +152,15 @@ Wait-ForDocker
 # Step 3: Create Kind cluster
 Write-Log "`n Creating Kind Kubernetes cluster..." "INFO" "Cyan"
 try {
-    $clusters = Invoke-CommandWithLogging "kind get clusters" "Get existing Kind clusters"
-    if ($clusters -match "k8s-blog-template") {
+    # Check for existing clusters (this command returns non-zero exit code if no clusters exist, which is normal)
+    Write-Log "Checking for existing Kind clusters..." "INFO" "Cyan"
+    $clusters = kind get clusters 2>&1
+    $clusterCheckExitCode = $LASTEXITCODE
+    
+    if ($clusterCheckExitCode -eq 0 -and $clusters -match "k8s-blog-template") {
         Write-Log " Cluster 'k8s-blog-template' already exists" "SUCCESS" "Green"
     } else {
-        Write-Log "Creating new cluster..." "INFO" "Yellow"
+        Write-Log "No existing cluster found, creating new cluster..." "INFO" "Yellow"
         Invoke-CommandWithLogging "kind create cluster --name k8s-blog-template" "Create Kind cluster"
         Write-Log " Kind cluster created successfully" "SUCCESS" "Green"
     }
