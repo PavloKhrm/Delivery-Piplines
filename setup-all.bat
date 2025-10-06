@@ -39,10 +39,10 @@ setx PATH "%PATH%" >nul 2>&1
 
 REM Run setup script (project bootstrap)
 set "ROOT=%~dp0"
-echo Running setup-fresh-machine.ps1...
-powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%setup-fresh-machine.ps1"
+echo Running setup-fresh-machine.ps1 with logging enabled...
+powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%setup-fresh-machine.ps1" -EnableLogging
 if %errorlevel% neq 0 (
-  echo setup-fresh-machine.ps1 failed.
+  echo setup-fresh-machine.ps1 failed. Check .\logs\ directory for detailed error logs.
   exit /b 1
 )
 
