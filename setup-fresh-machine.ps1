@@ -151,25 +151,33 @@ Wait-ForDocker
 
 # Step 3: Create Kind cluster
 Write-Log "`n Creating Kind Kubernetes cluster..." "INFO" "Cyan"
+
+# Check for existing clusters using a safer method
+Write-Log "Checking for existing Kind clusters..." "INFO" "Cyan"
+$existingCluster = $false
+
 try {
-    # Check for existing clusters (this command returns non-zero exit code if no clusters exist, which is normal)
-    Write-Log "Checking for existing Kind clusters..." "INFO" "Cyan"
-    $clusters = kind get clusters 2>&1
-    $clusterCheckExitCode = $LASTEXITCODE
-    
-    if ($clusterCheckExitCode -eq 0 -and $clusters -match "k8s-blog-template") {
+    $clusters = & kind get clusters 2>$null
+    if ($clusters -match "k8s-blog-template") {
+        $existingCluster = $true
         Write-Log " Cluster 'k8s-blog-template' already exists" "SUCCESS" "Green"
-    } else {
-        Write-Log "No existing cluster found, creating new cluster..." "INFO" "Yellow"
-        Invoke-CommandWithLogging "kind create cluster --name k8s-blog-template" "Create Kind cluster"
-        Write-Log " Kind cluster created successfully" "SUCCESS" "Green"
     }
 } catch {
-    Write-Log "Failed to create Kind cluster: $($_.Exception.Message)" "ERROR" "Red"
-    if ($EnableLogging) {
-        Write-Log "Check log file for details: $logFile" "INFO" "Cyan"
+    Write-Log "No existing clusters found (this is normal for fresh install)" "INFO" "Yellow"
+}
+
+if (-not $existingCluster) {
+    Write-Log "Creating new Kind cluster..." "INFO" "Yellow"
+    try {
+        Invoke-CommandWithLogging "kind create cluster --name k8s-blog-template" "Create Kind cluster"
+        Write-Log " Kind cluster created successfully" "SUCCESS" "Green"
+    } catch {
+        Write-Log "Failed to create Kind cluster: $($_.Exception.Message)" "ERROR" "Red"
+        if ($EnableLogging) {
+            Write-Log "Check log file for details: $logFile" "INFO" "Cyan"
+        }
+        throw
     }
-    throw
 }
 
 # Step 4: Install Traefik
