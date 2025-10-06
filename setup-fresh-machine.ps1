@@ -37,16 +37,11 @@ if ($EnableLogging) {
         Write-Host $Message -ForegroundColor $Color
         
         # Write to log file
-        Add-Content -Path $logFile -Value $logEntry -Encoding UTF8
+        Add-Content -Path $script:logFilePath -Value $logEntry -Encoding UTF8
     }
     
-    # Redirect all output to both console and log
-    $originalWriteHost = Get-Command Write-Host
-    function Write-Host {
-        param([string]$Object, [string]$ForegroundColor = "White")
-        $originalWriteHost.Invoke($Object, $ForegroundColor)
-        Add-Content -Path $logFile -Value "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $Object" -Encoding UTF8
-    }
+    # Store original Write-Host for logging
+    $script:logFilePath = $logFile
 } else {
     # Function to log only to console
     function Write-Log {
