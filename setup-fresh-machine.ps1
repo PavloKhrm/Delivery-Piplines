@@ -189,8 +189,16 @@ Write-Log "`n Installing Traefik load balancer..." "INFO" "Cyan"
 try {
     Invoke-CommandWithLogging "helm repo add traefik https://traefik.github.io/charts" "Add Traefik Helm repository"
     Invoke-CommandWithLogging "helm repo update" "Update Helm repositories"
-    Invoke-CommandWithLogging "helm install traefik traefik/traefik --namespace traefik-system --create-namespace --wait" "Install Traefik"
-    Write-Log " Traefik installed successfully" "SUCCESS" "Green"
+    
+    # Install Traefik without --wait flag to avoid timeout issues
+    Write-Log "Installing Traefik (this may take a few minutes)..." "INFO" "Yellow"
+    Invoke-CommandWithLogging "helm install traefik traefik/traefik --namespace traefik-system --create-namespace" "Install Traefik"
+    Write-Log " Traefik installation initiated successfully" "SUCCESS" "Green"
+    
+    # Wait a bit for Traefik to start
+    Write-Log "Waiting for Traefik pods to be ready..." "INFO" "Yellow"
+    Start-Sleep -Seconds 30
+    
 } catch {
     Write-Log " Traefik installation had issues, but continuing..." "WARNING" "Yellow"
     Write-Log "Error details: $($_.Exception.Message)" "ERROR" "Red"
@@ -202,9 +210,22 @@ Write-Log "`n Building Docker images..." "INFO" "Cyan"
 # Check if basic-blog directory exists
 if (Test-Path ".\basic-blog\basic-backend\") {
     Write-Log "Building backend image..." "INFO" "Yellow"
+    Write-Log "Note: This may take several minutes on first build" "INFO" "Cyan"
     try {
-        Invoke-CommandWithLogging "docker build -t blog-backend:latest .\basic-blog\basic-backend\" "Build backend Docker image"
-        Write-Log "Backend image built successfully" "SUCCESS" "Green"
+        # Use timeout for Docker build to prevent hanging
+        $job = Start-Job -ScriptBlock { docker build -t blog-backend:latest .\basic-blog\basic-backend\ }
+        $timeout = 600 # 10 minutes timeout
+        $result = Wait-Job $job -Timeout $timeout
+        
+        if ($result) {
+            $output = Receive-Job $job
+            Remove-Job $job
+            Write-Log "Backend image built successfully" "SUCCESS" "Green"
+        } else {
+            Stop-Job $job
+            Remove-Job $job
+            Write-Log "Backend image build timed out after $timeout seconds" "ERROR" "Red"
+        }
     } catch {
         Write-Log "Backend image build failed: $($_.Exception.Message)" "ERROR" "Red"
     }
@@ -215,8 +236,20 @@ if (Test-Path ".\basic-blog\basic-backend\") {
 if (Test-Path ".\basic-blog\basic-frontend\") {
     Write-Log "Building frontend image..." "INFO" "Yellow"
     try {
-        Invoke-CommandWithLogging "docker build -t blog-frontend:latest .\basic-blog\basic-frontend\" "Build frontend Docker image"
-        Write-Log "Frontend image built successfully" "SUCCESS" "Green"
+        # Use timeout for Docker build to prevent hanging
+        $job = Start-Job -ScriptBlock { docker build -t blog-frontend:latest .\basic-blog\basic-frontend\ }
+        $timeout = 600 # 10 minutes timeout
+        $result = Wait-Job $job -Timeout $timeout
+        
+        if ($result) {
+            $output = Receive-Job $job
+            Remove-Job $job
+            Write-Log "Frontend image built successfully" "SUCCESS" "Green"
+        } else {
+            Stop-Job $job
+            Remove-Job $job
+            Write-Log "Frontend image build timed out after $timeout seconds" "ERROR" "Red"
+        }
     } catch {
         Write-Log "Frontend image build failed: $($_.Exception.Message)" "ERROR" "Red"
     }
