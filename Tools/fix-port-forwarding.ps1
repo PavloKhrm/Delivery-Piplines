@@ -64,7 +64,7 @@ foreach ($combo in $portCombinations) {
     $httpPort = $combo.HTTP
     $httpsPort = $combo.HTTPS
     
-    Write-Log "Trying ports HTTP:$httpPort HTTPS:$httpsPort" "INFO" "Yellow"
+    Write-Log "Trying ports HTTP->$httpPort HTTPS->$httpsPort" "INFO" "Yellow"
     
     try {
         # Test if ports are available
@@ -84,7 +84,7 @@ foreach ($combo in $portCombinations) {
             $jobStatus = Get-Job -Name "traefik-port-forward" -ErrorAction SilentlyContinue
             if ($jobStatus -and $jobStatus.State -eq "Running") {
                 $successfulPorts = $combo
-                Write-Log "SUCCESS: Port forwarding active on HTTP:$httpPort HTTPS:$httpsPort" "SUCCESS" "Green"
+                Write-Log "SUCCESS: Port forwarding active on HTTP->$httpPort HTTPS->$httpsPort" "SUCCESS" "Green"
                 break
             } else {
                 Stop-Job $job -ErrorAction SilentlyContinue
@@ -94,7 +94,7 @@ foreach ($combo in $portCombinations) {
             Write-Log "Ports $httpPort or $httpsPort are in use, trying next combination" "WARNING" "Yellow"
         }
     } catch {
-        Write-Log "Failed to test ports $httpPort/$httpsPort: $($_.Exception.Message)" "ERROR" "Red"
+        Write-Log "Failed to test ports $httpPort->$httpsPort: $($_.Exception.Message)" "ERROR" "Red"
     }
 }
 
@@ -125,13 +125,13 @@ foreach ($namespace in $blogNamespaces) {
             $ingress = $ingressJson | ConvertFrom-Json
             if ($ingress.items -and $ingress.items.Count -gt 0) {
                 $hostName = $ingress.items[0].spec.rules[0].host
-                Write-Log "Testing access to: https://$hostName`:$httpsPort/" "INFO" "Yellow"
+                Write-Log "Testing access to: https->//$hostName`:$httpsPort/" "INFO" "Yellow"
                 
                 # Test with curl
                 try {
                     $result = & C:\Windows\System32\curl.exe -k -s -o $null -w "%{http_code}" "https://$hostName`:$httpsPort/"
                     if ($result -eq "200") {
-                        Write-Log "SUCCESS: Blog is accessible at https://$hostName`:$httpsPort/" "SUCCESS" "Green"
+                        Write-Log "SUCCESS: Blog is accessible at https->//$hostName`:$httpsPort/" "SUCCESS" "Green"
                         $workingBlogs += @{
                             Name = $nsName
                             Domain = $hostName
@@ -139,10 +139,10 @@ foreach ($namespace in $blogNamespaces) {
                             HTTP = $httpPort
                         }
                     } else {
-                        Write-Log "HTTP $result - Blog not responding at https://$hostName`:$httpsPort/" "WARNING" "Yellow"
+                        Write-Log "HTTP $result - Blog not responding at https->//$hostName`:$httpsPort/" "WARNING" "Yellow"
                     }
                 } catch {
-                    Write-Log "Connection failed to https://$hostName`:$httpsPort/ - $($_.Exception.Message)" "ERROR" "Red"
+                    Write-Log "Connection failed to https->//$hostName`:$httpsPort/ - $($_.Exception.Message)" "ERROR" "Red"
                 }
             }
         }
@@ -161,16 +161,16 @@ Multi-Tenant Blog System - Working URLs
 Generated: $(Get-Date)
 
 Port Forwarding Active:
-- HTTP: localhost:$httpPort
-- HTTPS: localhost:$httpsPort
+- HTTP-> localhost:$httpPort
+- HTTPS-> localhost:$httpsPort
 
 Working Blogs:
 "@
 
 foreach ($blog in $workingBlogs) {
     $summary += "`n- $($blog.Name):"
-    $summary += "`n  HTTPS: https://$($blog.Domain):$httpsPort/"
-    $summary += "`n  HTTP:  http://$($blog.Domain):$httpPort/"
+    $summary += "`n  HTTPS-> https://$($blog.Domain):$httpsPort/"
+    $summary += "`n  HTTP->  http://$($blog.Domain):$httpPort/"
 }
 
 $summary += "`n`nNote: Add these domains to your hosts file (C:\Windows\System32\drivers\etc\hosts):"
@@ -195,7 +195,7 @@ Write-Log "===============================" "SUCCESS" "Green"
 if ($workingBlogs.Count -gt 0) {
     Write-Log "`nWorking blogs:" "INFO" "Cyan"
     foreach ($blog in $workingBlogs) {
-        Write-Log "• https://$($blog.Domain):$httpsPort/" "SUCCESS" "Green"
+        Write-Log "• https->//$($blog.Domain):$httpsPort/" "SUCCESS" "Green"
     }
 } else {
     Write-Log "No working blogs found. Check the logs above for issues." "WARNING" "Yellow"
