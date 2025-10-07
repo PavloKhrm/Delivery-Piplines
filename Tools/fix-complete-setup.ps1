@@ -133,21 +133,21 @@ foreach ($namespace in $blogNamespaces) {
         if ($ingressJson) {
             $ingress = $ingressJson | ConvertFrom-Json
             if ($ingress.items -and $ingress.items.Count -gt 0) {
-                $host = $ingress.items[0].spec.rules[0].host
-                Write-Log "Testing access to: https://$host`:8443/" "INFO" "Yellow"
+                $hostName = $ingress.items[0].spec.rules[0].host
+                Write-Log "Testing access to: https://$hostName`:8443/" "INFO" "Yellow"
                 
                 # Test with curl
                 try {
-                    $result = & C:\Windows\System32\curl.exe -k -s -o $null -w "%{http_code}" "https://$host`:8443/"
+                    $result = & C:\Windows\System32\curl.exe -k -s -o $null -w "%{http_code}" "https://$hostName`:8443/"
                     if ($result -eq "200") {
-                        Write-Log "SUCCESS: Blog is accessible at https://$host`:8443/" "SUCCESS" "Green"
+                        Write-Log "SUCCESS: Blog is accessible at https://$hostName`:8443/" "SUCCESS" "Green"
                         $testSuccessful = $true
                         break
                     } else {
-                        Write-Log "HTTP $result - Blog not responding at https://$host`:8443/" "WARNING" "Yellow"
+                        Write-Log "HTTP $result - Blog not responding at https://$hostName`:8443/" "WARNING" "Yellow"
                     }
                 } catch {
-                    Write-Log "Connection failed to https://$host`:8443/ - $($_.Exception.Message)" "ERROR" "Red"
+                    Write-Log "Connection failed to https://$hostName`:8443/ - $($_.Exception.Message)" "ERROR" "Red"
                 }
             } else {
                 Write-Log "No ingress items found in namespace $nsName" "WARNING" "Yellow"
