@@ -48,8 +48,14 @@ if %errorlevel% neq 0 (
 
 REM Run complete setup fix
 if exist "%ROOT%Tools\fix-complete-setup.ps1" (
-  echo Running Tools\fix-complete-setup.ps1...
-  powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%Tools\fix-complete-setup.ps1"
+    echo Running Tools\fix-complete-setup.ps1...
+    powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%Tools\fix-complete-setup.ps1"
+)
+
+REM Run port forwarding fix
+if exist "%ROOT%Tools\fix-port-forwarding.ps1" (
+    echo Running Tools\fix-port-forwarding.ps1...
+    powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%Tools\fix-port-forwarding.ps1"
 )
 
 REM Run migrate-to-new-machine (optional helper)
