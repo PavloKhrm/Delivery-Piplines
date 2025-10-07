@@ -81,7 +81,7 @@ try {
     
 } catch {
     Write-Log "Failed to update hosts file: $($_.Exception.Message)" "ERROR" "Red"
-    Write-Log "You may need to manually add these entries to $hostsFile:" "WARNING" "Yellow"
+        Write-Log "You may need to manually add these entries to ${hostsFile}:" "WARNING" "Yellow"
     foreach ($entry in $newEntries) {
         Write-Log "  $entry" "INFO" "White"
     }
