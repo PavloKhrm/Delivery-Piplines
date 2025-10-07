@@ -26,10 +26,10 @@ spec:
         - name: website
           image: {{ .Values.website.image }}
           ports: [ { containerPort: {{ .Values.website.port }} } ]
-          envFrom:
-            - secretRef: { name: {{ .Release.Name }}-secrets }
+          #envFrom:
+           # - secretRef: { name: {{ .Release.Name }}-secrets }
           volumeMounts:
-            - { name: envfile, mountPath: /app }
+            - { name: envfile, mountPath: /app/.env, subPath: .env }
           resources:
 {{- toYaml .Values.resources.website | nindent 12 }}
       volumes:
