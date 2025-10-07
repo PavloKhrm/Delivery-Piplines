@@ -129,21 +129,34 @@ foreach ($namespace in $blogNamespaces) {
     
     try {
         # Get the host from ingress
-        $ingress = kubectl get ingress -n $nsName -o json | ConvertFrom-Json
-        if ($ingress.items.Count -gt 0) {
-            $host = $ingress.items[0].spec.rules[0].host
-            Write-Log "Testing access to: https://$host`:8443/" "INFO" "Yellow"
-            
-            # Test with curl
-            $result = & C:\Windows\System32\curl.exe -k -s -o $null -w "%{http_code}" "https://$host`:8443/"
-            if ($result -eq "200") {
-                Write-Log "SUCCESS: Blog is accessible at https://$host`:8443/" "SUCCESS" "Green"
-                $testSuccessful = $true
-                break
+        $ingressJson = kubectl get ingress -n $nsName -o json
+        if ($ingressJson) {
+            $ingress = $ingressJson | ConvertFrom-Json
+            if ($ingress.items -and $ingress.items.Count -gt 0) {
+                $host = $ingress.items[0].spec.rules[0].host
+                Write-Log "Testing access to: https://$host`:8443/" "INFO" "Yellow"
+                
+                # Test with curl
+                try {
+                    $result = & C:\Windows\System32\curl.exe -k -s -o $null -w "%{http_code}" "https://$host`:8443/"
+                    if ($result -eq "200") {
+                        Write-Log "SUCCESS: Blog is accessible at https://$host`:8443/" "SUCCESS" "Green"
+                        $testSuccessful = $true
+                        break
+                    } else {
+                        Write-Log "HTTP $result - Blog not responding at https://$host`:8443/" "WARNING" "Yellow"
+                    }
+                } catch {
+                    Write-Log "Connection failed to https://$host`:8443/ - $($_.Exception.Message)" "ERROR" "Red"
+                }
+            } else {
+                Write-Log "No ingress items found in namespace $nsName" "WARNING" "Yellow"
             }
+        } else {
+            Write-Log "No ingress found in namespace $nsName" "WARNING" "Yellow"
         }
     } catch {
-        Write-Log "Failed to test namespace $nsName" "ERROR" "Red"
+        Write-Log "Failed to test namespace $nsName - $($_.Exception.Message)" "ERROR" "Red"
     }
 }
 

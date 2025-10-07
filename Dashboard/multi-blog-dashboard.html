@@ -308,6 +308,16 @@
         </div>
 
         <div id="status-message" class="status-message" style="display: none;"></div>
+        
+        <div class="section-title">📋 Command Logs</div>
+        <div style="margin-bottom: 15px;">
+            <button class="btn" onclick="refreshLogs()">🔄 Refresh Logs</button>
+            <button class="btn" onclick="clearLogs()">🗑️ Clear Logs</button>
+        </div>
+        <div id="logs-container" style="background: #1a1a1a; color: #00ff00; padding: 15px; border-radius: 8px; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 0.9em; white-space: pre-wrap; word-break: break-all; max-height: 400px; overflow-y: auto; border: 1px solid #444;">
+            <div class="loading-spinner"></div> Loading logs...
+        </div>
+        
         <div class="section-title">Command Output</div>
         <pre id="command-output" class="log-output"></pre>
     </div>
@@ -353,6 +363,8 @@
                 
                 if (response.ok) {
                     showStatusMessage("Command executed successfully.", "success");
+                    // Refresh logs after command execution
+                    setTimeout(refreshLogs, 1000);
                 } else {
                     showStatusMessage(`Error: ${data.error || 'Unknown error'}`, "error");
                 }
@@ -613,8 +625,41 @@
             return `${seconds}s`;
         }
 
+        async function refreshLogs() {
+            const logsContainer = document.getElementById('logs-container');
+            logsContainer.innerHTML = '<div class="loading-spinner"></div> Loading logs...';
+            
+            try {
+                const response = await fetch('/logs');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    logsContainer.textContent = data.logs || 'No logs available yet.';
+                    // Auto-scroll to bottom
+                    logsContainer.scrollTop = logsContainer.scrollHeight;
+                } else {
+                    logsContainer.textContent = 'Failed to load logs: ' + (data.error || 'Unknown error');
+                }
+            } catch (error) {
+                logsContainer.textContent = 'Failed to load logs: ' + error.message;
+            }
+        }
+
+        async function clearLogs() {
+            if (confirm('Are you sure you want to clear all logs? This cannot be undone.')) {
+                try {
+                    await runCommand('Remove-Item -Path "logs\\dashboard-commands.log" -Force -ErrorAction SilentlyContinue');
+                    refreshLogs();
+                    showStatusMessage("Logs cleared successfully", "success");
+                } catch (error) {
+                    showStatusMessage("Failed to clear logs: " + error.message, "error");
+                }
+            }
+        }
+
         // Initial load
         fetchAllBlogs();
+        refreshLogs();
         // Refresh every 30 seconds
         setInterval(fetchAllBlogs, 30000);
     </script>
