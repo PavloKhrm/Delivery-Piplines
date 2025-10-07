@@ -52,28 +52,10 @@ if exist "%ROOT%Tools\fix-complete-setup.ps1" (
     powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%Tools\fix-complete-setup.ps1"
 )
 
-REM Run wildcard domains fix
-if exist "%ROOT%Tools\fix-wildcard-domains.ps1" (
-    echo Running Tools\fix-wildcard-domains.ps1...
-    powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%Tools\fix-wildcard-domains.ps1" -EnableLogging
-)
-
-REM Update hosts file for local domains
-if exist "%ROOT%Tools\update-hosts-file.ps1" (
-    echo Updating hosts file for local domains...
-    powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%Tools\update-hosts-file.ps1"
-)
-
-REM Start port forwarding for local domains
-if exist "%ROOT%Tools\start-port-forwarding.ps1" (
-    echo Starting port forwarding for local domains...
-    powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%Tools\start-port-forwarding.ps1" -EnableLogging
-)
-
-REM Test local domains access
-if exist "%ROOT%Tools\test-local-domains.ps1" (
-    echo Testing local domains access...
-    powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%Tools\test-local-domains.ps1" -EnableLogging
+REM Fix local websites to make them work
+if exist "%ROOT%Tools\fix-local-websites.ps1" (
+    echo Fixing local websites to make them work...
+    powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%Tools\fix-local-websites.ps1"
 )
 
 REM Run migrate-to-new-machine (optional helper)

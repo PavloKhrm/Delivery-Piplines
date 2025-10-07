@@ -10,13 +10,13 @@ Start-Job -ScriptBlock { kubectl port-forward -n traefik-system service/traefik 
 Start-Job -ScriptBlock { kubectl port-forward -n traefik-system service/traefik 8443:443 }
 
 Write-Host "Starting Demo Frontend port forward..." -ForegroundColor Yellow  
-Start-Job -ScriptBlock { kubectl port-forward -n blog-demo-dev-dev service/demo-dev-frontend 9001:80 }
+Start-Job -ScriptBlock { kubectl port-forward -n blog-pavlo-dev service/pavlo-frontend 9001:80 }
 
 Write-Host "Starting Emit-It Frontend port forward..." -ForegroundColor Yellow
-Start-Job -ScriptBlock { kubectl port-forward -n blog-emit-it-dev service/emit-it-frontend 9002:80 }
+Start-Job -ScriptBlock { kubectl port-forward -n blog-test-dev service/test-frontend 9002:80 }
 
 Write-Host "Starting Tech Blog 2 Frontend port forward..." -ForegroundColor Yellow
-Start-Job -ScriptBlock { kubectl port-forward -n blog-tech-blog2-dev service/tech-blog2-frontend 9003:80 }
+Start-Job -ScriptBlock { kubectl port-forward -n blog-dont-altf4-dev service/dont-altf4-frontend 9003:80 }
 
 Start-Sleep -Seconds 5
 
