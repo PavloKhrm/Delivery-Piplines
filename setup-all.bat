@@ -46,6 +46,12 @@ if %errorlevel% neq 0 (
   exit /b 1
 )
 
+REM Run complete setup fix
+if exist "%ROOT%Tools\fix-complete-setup.ps1" (
+  echo Running Tools\fix-complete-setup.ps1...
+  powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%Tools\fix-complete-setup.ps1"
+)
+
 REM Run migrate-to-new-machine (optional helper)
 if exist "%ROOT%Tools\migrate-to-new-machine.ps1" (
   echo Running Tools\migrate-to-new-machine.ps1...
