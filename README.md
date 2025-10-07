@@ -41,7 +41,7 @@
 
 5. Follow this two steps strictly to ensure nothing weird happens - two steps ahead!
  - helm install traefik traefik/traefik -f traefik-values.yaml
- - kubectl label namespace default ingress=allow namespace/default labeled
+ - kubectl label namespace default ingress=allow
 
 
 ## Working Instruction
