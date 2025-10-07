@@ -1,0 +1,9 @@
+﻿{
+    "httpsPort":  8443,
+    "timestamp":  {
+                      "value":  "\/Date(1759807504025)\/",
+                      "DisplayHint":  2,
+                      "DateTime":  "Tuesday, October 7, 2025 5:25:04 AM"
+                  },
+    "httpPort":  8080
+}
