@@ -52,6 +52,18 @@ if exist "%ROOT%Tools\fix-complete-setup.ps1" (
     powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%Tools\fix-complete-setup.ps1"
 )
 
+REM Run local domains SSL fix
+if exist "%ROOT%Tools\fix-local-domains.ps1" (
+    echo Running Tools\fix-local-domains.ps1...
+    powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%Tools\fix-local-domains.ps1"
+)
+
+REM Update hosts file for local domains
+if exist "%ROOT%Tools\update-hosts-file.ps1" (
+    echo Updating hosts file for local domains...
+    powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%Tools\update-hosts-file.ps1"
+)
+
 REM Run port forwarding fix
 if exist "%ROOT%Tools\fix-port-forwarding.ps1" (
     echo Running Tools\fix-port-forwarding.ps1...
