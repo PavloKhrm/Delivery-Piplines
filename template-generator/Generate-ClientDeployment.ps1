@@ -507,7 +507,37 @@ try {
 }
 
 echo "Deployment completed successfully!"
-echo "Access your application at: http://$($ClientConfig.domain)"
+
+# Auto-fix for local websites
+echo "Setting up local website access..."
+
+# Add domain to hosts file (Windows)
+HOSTS_FILE="/c/Windows/System32/drivers/etc/hosts"
+HOST_ENTRY="127.0.0.1 $($ClientConfig.domain)"
+
+if [ -f "`$HOSTS_FILE" ]; then
+    if ! grep -q "`$HOST_ENTRY" "`$HOSTS_FILE"; then
+        echo "`$HOST_ENTRY" | sudo tee -a "`$HOSTS_FILE" > /dev/null
+        echo "Added domain to hosts file: $($ClientConfig.domain)"
+    fi
+else
+    echo "Could not auto-update hosts file. Please add manually: 127.0.0.1 $($ClientConfig.domain)"
+fi
+
+# Start port forwarding if not already running
+if ! pgrep -f "kubectl port-forward.*traefik" > /dev/null; then
+    kubectl port-forward -n traefik-system service/traefik 8080:8080 8443:443 &
+    echo "Started Traefik port forwarding"
+    sleep 3
+fi
+
+echo ""
+echo "Your website is now accessible at:"
+echo "  HTTPS: https://$($ClientConfig.domain):8443/"
+echo "  HTTP:  http://$($ClientConfig.domain):8080/"
+echo ""
+echo "Note: Browser will show SSL warning - click 'Advanced' -> 'Proceed'"
+echo ""
 echo "External ports allocated:"
 echo "  Frontend: $($ClientConfig.ports.frontend.external)"
 echo "  Backend: $($ClientConfig.ports.backend.external)"
@@ -546,8 +576,38 @@ helm upgrade --install $($ClientConfig.name) `$PSScriptRoot/../../helm-blog-temp
   --timeout=10m
 
 Write-Host "Deployment completed successfully!" -ForegroundColor Green
-Write-Host "Access your application at: http://$($ClientConfig.domain)" -ForegroundColor Cyan
-Write-Host "External ports allocated:" -ForegroundColor Cyan
+
+# Auto-fix for local websites
+Write-Host "Setting up local website access..." -ForegroundColor Yellow
+
+# Add domain to hosts file
+`$hostsFile = "C:\Windows\System32\drivers\etc\hosts"
+`$hostEntry = "127.0.0.1 $($ClientConfig.domain)"
+try {
+    `$currentHosts = Get-Content `$hostsFile -ErrorAction SilentlyContinue
+    if (`$currentHosts -notcontains `$hostEntry) {
+        Add-Content -Path `$hostsFile -Value `$hostEntry -ErrorAction SilentlyContinue
+        Write-Host "Added domain to hosts file: $($ClientConfig.domain)" -ForegroundColor Green
+    }
+} catch {
+    Write-Host "Could not auto-update hosts file. Please add manually: 127.0.0.1 $($ClientConfig.domain)" -ForegroundColor Yellow
+}
+
+# Start port forwarding if not already running
+`$existingJobs = Get-Job -Name "traefik-forward" -ErrorAction SilentlyContinue
+if (-not `$existingJobs) {
+    Start-Job -Name "traefik-forward" -ScriptBlock { 
+        kubectl port-forward -n traefik-system service/traefik 8080:8080 8443:443 
+    } | Out-Null
+    Write-Host "Started Traefik port forwarding" -ForegroundColor Green
+    Start-Sleep -Seconds 3
+}
+
+Write-Host "`nYour website is now accessible at:" -ForegroundColor Cyan
+Write-Host "  HTTPS: https://$($ClientConfig.domain):8443/" -ForegroundColor Green
+Write-Host "  HTTP:  http://$($ClientConfig.domain):8080/" -ForegroundColor Green
+Write-Host "`nNote: Browser will show SSL warning - click 'Advanced' -> 'Proceed'" -ForegroundColor Yellow
+Write-Host "`nExternal ports allocated:" -ForegroundColor Cyan
 Write-Host "  Frontend: $($ClientConfig.ports.frontend.external)" -ForegroundColor White
 Write-Host "  Backend: $($ClientConfig.ports.backend.external)" -ForegroundColor White
 Write-Host "  MySQL: $($ClientConfig.ports.mysql.external)" -ForegroundColor White
@@ -658,7 +718,10 @@ try {
         Write-Info "`nNext steps:"
         Write-Info "  1. Review generated files in: $deploymentPath"
         Write-Info "  2. Run deployment: cd $deploymentPath && ./deploy.ps1"
-        Write-Info "  3. Access application at: http://$($clientConfig.domain)"
+        Write-Info "  3. Your website will be automatically accessible at:"
+        Write-Info "     - HTTPS: https://$($clientConfig.domain):8443/"
+        Write-Info "     - HTTP:  http://$($clientConfig.domain):8080/"
+        Write-Info "  4. Browser will show SSL warning - click 'Advanced' -> 'Proceed'"
     }
     
 } catch {
