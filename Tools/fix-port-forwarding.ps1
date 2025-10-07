@@ -94,7 +94,7 @@ foreach ($combo in $portCombinations) {
             Write-Log "Ports $httpPort or $httpsPort are in use, trying next combination" "WARNING" "Yellow"
         }
     } catch {
-        Write-Log "Failed to test ports $httpPort:$httpsPort - $($_.Exception.Message)" "ERROR" "Red"
+        Write-Log "Failed to test ports $httpPort -> $httpsPort - $($_.Exception.Message)" "ERROR" "Red"
     }
 }
 
