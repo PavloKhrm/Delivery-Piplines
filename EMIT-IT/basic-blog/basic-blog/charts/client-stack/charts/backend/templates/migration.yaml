@@ -16,8 +16,8 @@ spec:
       restartPolicy: Never
       containers:
         - name: migrate
-          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default "latest" }}"
-          imagePullPolicy: {{ .Values.backend.image.pullPolicy | default "IfNotPresent" }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default "latest" }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy | default "IfNotPresent" }}
           command: ["/bin/sh","-c"]
           args: ["npm run migration"]
           envFrom:

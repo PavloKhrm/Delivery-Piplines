@@ -32,6 +32,11 @@ fi
 
 # --- Terraform (Tofu) ---
 cd ../infrastructure/tofu
+# Switch to a workspace for this client (or create it if it doesn't exist)
+if ! tofu workspace select "$CLIENT" &>/dev/null; then
+  tofu workspace new "$CLIENT"
+  tofu workspace select "$CLIENT"
+fi
 tofu init -input=false
 tofu apply -auto-approve \
   -var="client=$CLIENT" \

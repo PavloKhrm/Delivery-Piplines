@@ -6,6 +6,17 @@ terraform {
     }
   }
 }
+#
+# terraform {
+#   backend "s3" {
+#     bucket = "my-terraform-state"
+#     key    = "hetzner-client-${var.client}/terraform.tfstate"
+#     region = "us-east-1"
+#     encrypt = true
+#     dynamodb_table = "terraform-locks"   # for state locking
+#   }
+# }
+
 
 provider "hcloud" {
   token = var.hcloud_token
