@@ -1,0 +1,59 @@
+image: node:22-bullseye-slim
+
+options:
+  docker: true
+
+pipelines:
+  default:
+    - step:
+        name: Build & Push Docker Images
+        services:
+          - docker
+        caches:
+          - docker
+        script:
+          - echo "Building backend & frontend Docker images..."
+          - docker login -u "$DOCKER_HUB_USER" -p "$DOCKER_HUB_PASS"
+          # Build backend
+          - docker build -t $DOCKER_REPO/basic-backend:${BITBUCKET_COMMIT} \
+            --build-arg CLIENT_NAME=${CLIENT_NAME} \
+            -f basic-backend/Dockerfile ./basic-backend
+          # Build frontend
+          - docker build -t $DOCKER_REPO/basic-frontend:${BITBUCKET_COMMIT} \
+            --build-arg CLIENT_NAME=${CLIENT_NAME} \
+            -f basic-frontend/Dockerfile ./basic-frontend
+          # Push images
+          - docker push $DOCKER_REPO/basic-backend:${BITBUCKET_COMMIT}
+          - docker push $DOCKER_REPO/basic-frontend:${BITBUCKET_COMMIT}
+
+    - step:
+        name: Deploy to Hetzner (via OpenTofu + Ansible + Helm)
+        services:
+          - docker
+        script:
+          - echo "Starting deployment for ${CLIENT_NAME}..."
+          - apt-get update && apt-get install -y python3 python3-pip curl openssh-client
+          - pip3 install ansible openstacksdk jinja2
+          - mkdir -p ~/.ssh && echo "$SSH_PRIVATE_KEY" > ~/.ssh/your-ci && chmod 600 ~/.ssh/your-ci
+          - echo "Host *\n  StrictHostKeyChecking no\n" > ~/.ssh/config
+          - export ANSIBLE_HOST_KEY_CHECKING=False
+          - export HCLOUD_TOKEN=${HCLOUD_TOKEN}
+          - export BACKEND_TAG=${BITBUCKET_COMMIT}
+          - export FRONTEND_TAG=${BITBUCKET_COMMIT}
+          - export BACKEND_REPO=${DOCKER_REPO}/basic-backend
+          - export FRONTEND_REPO=${DOCKER_REPO}/basic-frontend
+          - export CLIENT_NAME=${CLIENT_NAME}
+          - export CLIENT_DOMAIN=${CLIENT_DOMAIN}
+          - cd scripts
+          # If provisioning a new client (first time)
+          - if [ "$FIRST_DEPLOY" = "true" ]; then
+            bash provision.sh "$CLIENT_NAME" "$CLIENT_DOMAIN";
+            else
+            bash update.sh "$CLIENT_NAME" "$CLIENT_DOMAIN";
+            fi
+          - echo " Deployment complete for ${CLIENT_NAME}"
+
+definitions:
+  services:
+    docker:
+      memory: 4096

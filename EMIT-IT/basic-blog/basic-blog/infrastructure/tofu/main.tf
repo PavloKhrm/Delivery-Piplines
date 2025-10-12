@@ -1,54 +1,99 @@
 terraform {
   required_providers {
     hcloud = {
-      source  = "registry.terraform.io/hetznercloud/hcloud"
+      source  = "hetznercloud/hcloud"
       version = "~> 1.45.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.5.0"
+    }
   }
-}
-#
-# terraform {
-#   backend "s3" {
-#     bucket = "my-terraform-state"
-#     key    = "hetzner-client-${var.client}/terraform.tfstate"
-#     region = "us-east-1"
-#     encrypt = true
-#     dynamodb_table = "terraform-locks"   # for state locking
-#   }
-# }
 
+  # Optional: enable this when you set up remote state (recommended)
+  # backend "s3" {
+  #   bucket         = "emitit-tofu-states"
+  #   key            = "hetzner/${var.client}/terraform.tfstate"
+  #   region         = "eu-central-1"
+  #   encrypt        = true
+  #   dynamodb_table = "terraform-locks"
+  # }
+}
 
 provider "hcloud" {
   token = var.hcloud_token
 }
 
-# Dynamically register SSH key in Hetzner for this client
+# ───────────────────────────────────────────────
+# RANDOM SUBNET
+# ───────────────────────────────────────────────
+resource "random_integer" "subnet" {
+  min = 10
+  max = 200
+}
+
+# ───────────────────────────────────────────────
+# PRIVATE NETWORK
+# ───────────────────────────────────────────────
+resource "hcloud_network" "net" {
+  name     = "${var.client}-net"
+  ip_range = "10.${random_integer.subnet.result}.0.0/16"
+}
+
+# ───────────────────────────────────────────────
+# FIREWALL (restrict SSH + web ports)
+# ───────────────────────────────────────────────
+resource "hcloud_firewall" "fw" {
+  name = "${var.client}-firewall"
+
+  rule {
+    direction  = "in"
+    protocol   = "tcp"
+    port       = "22"
+    source_ips = ["0.0.0.0/0", "::/0"]
+  }
+
+  rule {
+    direction  = "in"
+    protocol   = "tcp"
+    port       = "80,443,6443"
+    source_ips = ["0.0.0.0/0", "::/0"]
+  }
+
+  rule {
+    direction  = "out"
+    protocol   = "tcp"
+    port       = "any"
+    source_ips = ["0.0.0.0/0", "::/0"]
+  }
+}
+
+# ───────────────────────────────────────────────
+# SSH KEY
+# ───────────────────────────────────────────────
 resource "hcloud_ssh_key" "deploy" {
-  name       = "${var.client}-deploy-key"
+  name       = "${var.client}-deploy-${substr(md5(var.ssh_public_key), 0, 6)}"
   public_key = var.ssh_public_key
 }
 
-# -----------------------------
-# Master node (always 1)
-# -----------------------------
+# ───────────────────────────────────────────────
+# MASTER NODE
+# ───────────────────────────────────────────────
 resource "hcloud_server" "master" {
-  count       = 1
-  name        = "k3s-${var.client}-master-${count.index}"
-  server_type = var.server_type   # e.g. "cpx21"
-  image       = "ubuntu-22.04"
-  location    = var.location      # e.g. "nbg1"
-  ssh_keys    = [hcloud_ssh_key.deploy.name]
+  name         = "k3s-${var.client}-master"
+  server_type  = var.server_type   # e.g., "cpx21"
+  image        = "ubuntu-22.04"
+  location     = var.location      # e.g., "nbg1"
+  ssh_keys     = [hcloud_ssh_key.deploy.name]
+  firewall_ids = [hcloud_firewall.fw.id]
+  networks     = [hcloud_network.net.id]
 
   user_data = <<-CLOUD
   #cloud-config
   package_update: true
-  packages:
-    - curl
-    - ca-certificates
-    - apt-transport-https
   users:
     - name: deploy
-      groups: [ sudo ]
+      groups: [sudo]
       sudo: "ALL=(ALL) NOPASSWD:ALL"
       shell: /bin/bash
       ssh_authorized_keys:
@@ -58,32 +103,28 @@ resource "hcloud_server" "master" {
   CLOUD
 }
 
-# -----------------------------
-# Agent nodes (configurable count)
-# -----------------------------
+# ───────────────────────────────────────────────
+# AGENT NODES
+# ───────────────────────────────────────────────
 resource "hcloud_server" "agents" {
-  count       = var.agent_count
-  name        = "k3s-${var.client}-agent-${count.index}"
-  server_type = var.server_type
-  image       = "ubuntu-22.04"
-  location    = var.location
-  ssh_keys    = [hcloud_ssh_key.deploy.name]
+  count        = var.agent_count
+  name         = "k3s-${var.client}-agent-${count.index}"
+  server_type  = var.server_type
+  image        = "ubuntu-22.04"
+  location     = var.location
+  ssh_keys     = [hcloud_ssh_key.deploy.name]
+  firewall_ids = [hcloud_firewall.fw.id]
+  networks     = [hcloud_network.net.id]
 
   user_data = <<-CLOUD
   #cloud-config
   package_update: true
-  packages:
-    - curl
-    - ca-certificates
-    - apt-transport-https
   users:
     - name: deploy
-      groups: [ sudo ]
+      groups: [sudo]
       sudo: "ALL=(ALL) NOPASSWD:ALL"
       shell: /bin/bash
       ssh_authorized_keys:
         - ${var.ssh_public_key}
-  runcmd:
-    - sysctl -w net.ipv4.ip_forward=1
   CLOUD
 }
