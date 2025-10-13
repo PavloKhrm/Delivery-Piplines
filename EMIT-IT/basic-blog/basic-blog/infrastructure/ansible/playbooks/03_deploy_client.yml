@@ -1,22 +1,28 @@
 ---
-- hosts: all
+# ───────────────────────────────────────────────
+# 03_deploy_client.yml – Deploy Client Application Stack (with auto-secrets)
+# ───────────────────────────────────────────────
+
+- name: Deploy client Helm chart
+  hosts: k3s_master
+  become: yes
   vars:
-    KUBECONFIG_LOCAL: kubeconfig_{{ inventory_hostname | default('localhost') }}.yaml
+    # Chart and client variables
     CHART_PATH: "{{ playbook_dir }}/../../charts/client-stack"
+    client_namespace: "{{ lookup('env','CLIENT_NAME') | default('testclient', true) }}"
+    client_domain: "{{ lookup('env','CLIENT_DOMAIN') | default(client_namespace + '.local', true) }}"
+    backend_tag: "{{ lookup('env','BACKEND_TAG') | default('latest', true) }}"
+    frontend_tag: "{{ lookup('env','FRONTEND_TAG') | default('latest', true) }}"
+    kubeconfig_path: "/etc/rancher/k3s/k3s.yaml"
+    secrets_autogen: true
 
   tasks:
-    - name: Add Helm repos
-      local_action:
-        module: shell
-        cmd: >
-          helm repo add bitnami https://charts.bitnami.com/bitnami &&
-          helm repo add opensearch https://opensearch-project.github.io/helm-charts/ &&
-          helm repo update
-      tags: always
-
+    # -------------------------------
+    # Ensure namespace exists
+    # -------------------------------
     - name: Ensure namespace exists
       kubernetes.core.k8s:
-        kubeconfig: "{{ KUBECONFIG_LOCAL }}"
+        kubeconfig: "{{ kubeconfig_path }}"
         state: present
         definition:
           apiVersion: v1
@@ -25,36 +31,87 @@
             name: "{{ client_namespace }}"
       tags: deploy
 
-    - name: Deploy client stack (Helm umbrella chart)
-      local_action:
-        module: shell
-        cmd: >
-          helm upgrade --install {{ client_namespace }} ../../charts/client-stack
-          --kubeconfig {{ KUBECONFIG_LOCAL }}
-          --namespace {{ client_namespace }}
-          --set global.domain={{ client_domain }}
-          --set global.clientName={{ client_namespace }}
-          --set backend.image.tag={{ lookup('env','BACKEND_TAG') | default('latest', true) }}
-          --set frontend.image.tag={{ lookup('env','FRONTEND_TAG') | default('latest', true) }}
-          --atomic --wait
+    # -------------------------------
+    # Check for existing per-client values file
+    # -------------------------------
+    - name: Check if client-specific values file exists
+      delegate_to: localhost
+      stat:
+        path: "../../values/values.{{ client_namespace }}.yaml"
+      register: values_file
       tags: deploy
 
-    - name: Remove Helm release
-      local_action:
-        module: shell
-        cmd: >
-          helm uninstall {{ client_namespace }}
-          --kubeconfig {{ KUBECONFIG_LOCAL }}
-          --namespace {{ client_namespace }} || true
-      tags: destroy
+    # -------------------------------
+    # Generate fallback values file if missing
+    # -------------------------------
+    - name: Generate fallback values file
+      delegate_to: localhost
+      when: not values_file.stat.exists
+      copy:
+        dest: "/tmp/values.{{ client_namespace }}.yaml"
+        content: |
+          global:
+            domain: {{ client_domain }}
+            clientName: {{ client_namespace }}
 
-    - name: Delete namespace
-      kubernetes.core.k8s:
-        kubeconfig: "{{ KUBECONFIG_LOCAL }}"
-        state: absent
-        definition:
-          apiVersion: v1
-          kind: Namespace
-          metadata:
-            name: "{{ client_namespace }}"
-      tags: destroy
+          backend:
+            image:
+              tag: {{ backend_tag }}
+          frontend:
+            image:
+              tag: {{ frontend_tag }}
+      tags: deploy
+
+    # -------------------------------
+    # Generate unique secrets (auto mode)
+    # -------------------------------
+    - name: Generate unique secrets for client
+      set_fact:
+        mysql_root_password: "{{ lookup('password', '/dev/null length=16 chars=ascii_letters,digits') }}"
+        redis_password: "{{ lookup('password', '/dev/null length=16 chars=ascii_letters,digits') }}"
+        elastic_password: "{{ lookup('password', '/dev/null length=20 chars=ascii_letters,digits') }}"
+        app_session_secret: "{{ lookup('password', '/dev/null length=32 chars=ascii_letters,digits') }}"
+      when: secrets_autogen | bool
+      tags: deploy
+
+    # -------------------------------
+    # Deploy client Helm release
+    # -------------------------------
+    - name: Deploy Helm release for client
+      shell: |
+        helm upgrade --install {{ client_namespace }} {{ CHART_PATH }} \
+          -n {{ client_namespace }} \
+          -f {{ values_file.stat.exists | ternary('../../values/values.' + client_namespace + '.yaml', '/tmp/values.' + client_namespace + '.yaml') }} \
+          --set global.domain={{ client_domain }} \
+          --set global.clientName={{ client_namespace }} \
+          --set secrets.mysqlRootPassword="{{ mysql_root_password }}" \
+          --set secrets.redisPassword="{{ redis_password }}" \
+          --set secrets.elasticPassword="{{ elastic_password }}" \
+          --set secrets.appSessionSecret="{{ app_session_secret }}" \
+          --set backend.image.tag={{ backend_tag }} \
+          --set frontend.image.tag={{ frontend_tag }} \
+          --atomic --wait --timeout 10m
+      args:
+        executable: /bin/bash
+      tags: deploy
+
+    # -------------------------------
+    # Print success summary
+    # -------------------------------
+    - name: Display deployment summary
+      delegate_to: localhost
+      debug:
+        msg: |
+          ✅ Successfully deployed client: {{ client_namespace }}
+          🌐 Domain: {{ client_domain }}
+          🐳 Backend tag: {{ backend_tag }}
+          🎨 Frontend tag: {{ frontend_tag }}
+          🔐 Secrets:
+            - MySQL root password: {{ mysql_root_password | default('N/A') }}
+            - Redis password: {{ redis_password | default('N/A') }}
+            - Elastic password: {{ elastic_password | default('N/A') }}
+          📄 Values file used: {{
+            values_file.stat.exists |
+            ternary('../../values/values.' + client_namespace + '.yaml', '/tmp/values.' + client_namespace + '.yaml')
+          }}
+      tags: deploy

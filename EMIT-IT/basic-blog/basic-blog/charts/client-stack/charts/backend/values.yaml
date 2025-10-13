@@ -6,3 +6,10 @@ service:
   port: 3000
 
 env: {}   # will be merged from umbrella
+
+backend:
+  env:
+    DATABASE_PASSWORD: "{{ .Values.secrets.mysqlRootPassword }}"
+    REDIS_PASSWORD: "{{ .Values.secrets.redisPassword }}"
+    ELASTIC_PASSWORD: "{{ .Values.secrets.elasticPassword }}"
+    APP_SESSION_SECRET: "{{ .Values.secrets.appSessionSecret }}"

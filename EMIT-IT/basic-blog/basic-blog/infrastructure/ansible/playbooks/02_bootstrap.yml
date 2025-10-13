@@ -1,77 +1,95 @@
 ---
-- hosts: all
+# ───────────────────────────────────────────────
+# 02_bootstrap.yml – Install Core Kubernetes Add-ons
+# ───────────────────────────────────────────────
+
+- name: Bootstrap core services (Traefik, cert-manager, CSI)
+  hosts: k3s_master
+  become: yes
   vars:
-    KUBECONFIG_LOCAL: kubeconfig_{{ inventory_hostname | default('localhost') }}.yaml
-    # Default is hetzner; override with --extra-vars "mode=local"
-    mode: "hetzner"
+    KUBECONFIG_LOCAL: kubeconfig_cluster.yaml
+    mode: "hetzner"             # override via --extra-vars "mode=local"
+    client_namespace: "{{ lookup('env', 'CLIENT_NAME') | default('default', true) }}"
+    email_lets_encrypt: "{{ lookup('env', 'LETSENCRYPT_EMAIL') | default('admin@emit-it.com', true) }}"
 
   tasks:
     # -------------------------------
-    # Helm repos
+    # Helm repositories
     # -------------------------------
-    - name: Add Traefik Helm repo
-      local_action: command helm repo add traefik https://traefik.github.io/charts
-      ignore_errors: true
-
-    - name: Add Jetstack Helm repo
-      local_action: command helm repo add jetstack https://charts.jetstack.io
-      ignore_errors: true
-
-    - name: Add Hetzner Helm repo (only in Hetzner mode)
-      local_action: command helm repo add hcloud https://charts.hetzner.cloud
-      when: mode == "hetzner"
-      ignore_errors: true
-
-    - name: Update Helm repos
-      local_action: command helm repo update
+    - name: Add Helm repositories
+      shell: |
+        helm repo add traefik https://traefik.github.io/charts || true
+        helm repo add jetstack https://charts.jetstack.io || true
+        {% if mode == 'hetzner' %}
+        helm repo add hcloud https://charts.hetzner.cloud || true
+        {% endif %}
+        helm repo update
+      args:
+        executable: /bin/bash
+      delegate_to: "{{ inventory_hostname }}"
 
     # -------------------------------
     # Traefik Ingress Controller
     # -------------------------------
     - name: Install Traefik via Helm
-      local_action:
-        module: shell
-        cmd: >
-          helm upgrade --install traefik traefik/traefik
-          --kubeconfig {{ KUBECONFIG_LOCAL }}
-          -n kube-system --create-namespace
-          --set ingressRoute.dashboard.enabled=true
-          --set ports.websecure.tls.enabled=true
-          --set service.type=NodePort
-          --set ingressClass.enabled=true
-          --set ingressClass.isDefaultClass=true
+      shell: |
+        helm upgrade --install traefik traefik/traefik \
+          --namespace kube-system --create-namespace \
+          --set ingressRoute.dashboard.enabled=true \
+          --set ports.websecure.tls.enabled=true \
+          --set service.type=NodePort \
+          --set ingressClass.enabled=true \
+          --set ingressClass.isDefaultClass=true \
+          --wait --timeout 5m
+      retries: 3
+      delay: 10
+      register: traefik_result
+      until: traefik_result.rc == 0
+      delegate_to: "{{ inventory_hostname }}"
 
     # -------------------------------
     # cert-manager
     # -------------------------------
     - name: Install cert-manager CRDs
-      local_action:
-        module: shell
-        cmd: >
-          kubectl --kubeconfig {{ KUBECONFIG_LOCAL }}
-          apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.4/cert-manager.crds.yaml
+      shell: |
+        kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.4/cert-manager.crds.yaml
+      register: crd_result
+      retries: 3
+      delay: 10
+      until: crd_result.rc == 0
+      delegate_to: "{{ inventory_hostname }}"
 
     - name: Install cert-manager via Helm
-      local_action:
-        module: shell
-        cmd: >
-          helm upgrade --install cert-manager jetstack/cert-manager
-          --kubeconfig {{ KUBECONFIG_LOCAL }}
-          -n cert-manager --create-namespace
-          --version v1.14.4
-          --set installCRDs=false
-
-    - apiVersion: cert-manager.io/v1
-      kind: ClusterIssuer
-      metadata:
-        name: selfsigned-issuer
-      spec:
-        selfSigned: { }
+      shell: |
+        helm upgrade --install cert-manager jetstack/cert-manager \
+          -n cert-manager --create-namespace \
+          --version v1.14.4 \
+          --set installCRDs=false \
+          --wait --timeout 5m
+      retries: 3
+      delay: 10
+      register: cert_result
+      until: cert_result.rc == 0
+      delegate_to: "{{ inventory_hostname }}"
 
     # -------------------------------
-    # ClusterIssuer (skip in local mode)
+    # ClusterIssuers
     # -------------------------------
-    - name: Create ClusterIssuer (Let’s Encrypt)
+    - name: Create Self-Signed ClusterIssuer (for internal testing)
+      kubernetes.core.k8s:
+        kubeconfig: "{{ KUBECONFIG_LOCAL }}"
+        state: present
+        definition:
+          apiVersion: cert-manager.io/v1
+          kind: ClusterIssuer
+          metadata:
+            name: selfsigned-issuer
+          spec:
+            selfSigned: {}
+      delegate_to: localhost
+      when: mode != "hetzner"
+
+    - name: Create Let’s Encrypt ClusterIssuer (production)
       kubernetes.core.k8s:
         kubeconfig: "{{ KUBECONFIG_LOCAL }}"
         state: present
@@ -93,17 +111,20 @@
       when: mode == "hetzner"
 
     # -------------------------------
-    # Hetzner CSI (only in Hetzner mode)
+    # Hetzner CSI (persistent storage)
     # -------------------------------
-    - name: Install Hetzner CSI
-      local_action:
-        module: shell
-        cmd: >
-          helm upgrade --install hcloud-csi hcloud/hcloud-csi
-          --kubeconfig {{ KUBECONFIG_LOCAL }}
-          -n kube-system --create-namespace
-          --set secret.token={{ lookup('env', 'HCLOUD_TOKEN') }}
+    - name: Install Hetzner CSI (only for Hetzner)
+      shell: |
+        helm upgrade --install hcloud-csi hcloud/hcloud-csi \
+          -n kube-system --create-namespace \
+          --set secret.token={{ lookup('env', 'HCLOUD_TOKEN') }} \
+          --wait --timeout 5m
       when: mode == "hetzner"
+      retries: 3
+      delay: 10
+      register: csi_result
+      until: csi_result.rc == 0
+      delegate_to: "{{ inventory_hostname }}"
 
     # -------------------------------
     # Client Namespace
@@ -117,3 +138,4 @@
           kind: Namespace
           metadata:
             name: "{{ client_namespace }}"
+      delegate_to: "{{ inventory_hostname }}"

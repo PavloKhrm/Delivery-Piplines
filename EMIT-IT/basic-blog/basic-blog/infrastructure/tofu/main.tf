@@ -86,7 +86,10 @@ resource "hcloud_server" "master" {
   location     = var.location      # e.g., "nbg1"
   ssh_keys     = [hcloud_ssh_key.deploy.name]
   firewall_ids = [hcloud_firewall.fw.id]
-  networks     = [hcloud_network.net.id]
+
+  network {
+    network_id = hcloud_network.net.id
+  }
 
   user_data = <<-CLOUD
   #cloud-config
@@ -114,7 +117,10 @@ resource "hcloud_server" "agents" {
   location     = var.location
   ssh_keys     = [hcloud_ssh_key.deploy.name]
   firewall_ids = [hcloud_firewall.fw.id]
-  networks     = [hcloud_network.net.id]
+
+  network {
+    network_id = hcloud_network.net.id
+  }
 
   user_data = <<-CLOUD
   #cloud-config

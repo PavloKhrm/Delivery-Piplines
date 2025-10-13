@@ -4,3 +4,8 @@ image:
 
 service:
   port: 80
+
+frontend:
+  env:
+    APP_FRONTEND_URL: "http://{{ .Values.global.domain }}"
+    VITE_API_BASE_URL: "http://{{ .Values.global.clientName }}-backend:3000"
