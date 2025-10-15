@@ -21,6 +21,12 @@ variable "ssh_public_key" {
   type        = string
 }
 
+variable "ssh_key_path" {
+  description = "Path to the SSH public key file"
+  type        = string
+  default     = "~/.ssh/id_rsa.pub"
+}
+
 # VM type (Hetzner Cloud server size)
 variable "server_type" {
   description = "Hetzner server type (e.g., cpx11, cpx21, cpx31)"

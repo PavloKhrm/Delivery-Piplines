@@ -47,25 +47,55 @@ resource "hcloud_firewall" "fw" {
   name = "${var.client}-firewall"
 
   rule {
-    direction  = "in"
-    protocol   = "tcp"
-    port       = "22"
-    source_ips = ["0.0.0.0/0", "::/0"]
+    direction       = "in"
+    protocol        = "tcp"
+    port            = "22"
+    source_ips      = ["0.0.0.0/0", "::/0"]
+    destination_ips = ["0.0.0.0/0"]
+  }
+
+  # Separate HTTP, HTTPS, and K3s API ports
+  rule {
+    direction       = "in"
+    protocol        = "tcp"
+    port            = "80"
+    source_ips      = ["0.0.0.0/0", "::/0"]
+    destination_ips = ["0.0.0.0/0"]
   }
 
   rule {
-    direction  = "in"
-    protocol   = "tcp"
-    port       = "80,443,6443"
-    source_ips = ["0.0.0.0/0", "::/0"]
+    direction       = "in"
+    protocol        = "tcp"
+    port            = "443"
+    source_ips      = ["0.0.0.0/0", "::/0"]
+    destination_ips = ["0.0.0.0/0"]
   }
 
   rule {
-    direction  = "out"
-    protocol   = "tcp"
-    port       = "any"
-    source_ips = ["0.0.0.0/0", "::/0"]
+    direction       = "in"
+    protocol        = "tcp"
+    port            = "6443"
+    source_ips      = ["0.0.0.0/0", "::/0"]
+    destination_ips = ["0.0.0.0/0"]
   }
+
+  rule {
+    direction       = "out"
+    protocol        = "tcp"
+    port            = "any"
+    source_ips      = ["0.0.0.0/0", "::/0"]
+    destination_ips = ["0.0.0.0/0"]
+  }
+}
+
+# ───────────────────────────────────────────────
+# NETWORK SUBNET
+# ───────────────────────────────────────────────
+resource "hcloud_network_subnet" "subnet" {
+  network_id   = hcloud_network.net.id
+  type         = "server"
+  network_zone = "eu-central" # or "eu-central" / "us-east" based on location
+  ip_range     = "10.${random_integer.subnet.result}.0.0/24"
 }
 
 # ───────────────────────────────────────────────
@@ -80,6 +110,7 @@ resource "hcloud_ssh_key" "deploy" {
 # MASTER NODE
 # ───────────────────────────────────────────────
 resource "hcloud_server" "master" {
+  depends_on = [hcloud_network_subnet.subnet]
   name         = "k3s-${var.client}-master"
   server_type  = var.server_type   # e.g., "cpx21"
   image        = "ubuntu-22.04"
@@ -91,25 +122,26 @@ resource "hcloud_server" "master" {
     network_id = hcloud_network.net.id
   }
 
-  user_data = <<-CLOUD
-  #cloud-config
-  package_update: true
-  users:
-    - name: deploy
-      groups: [sudo]
-      sudo: "ALL=(ALL) NOPASSWD:ALL"
-      shell: /bin/bash
-      ssh_authorized_keys:
-        - ${var.ssh_public_key}
-  runcmd:
-    - sysctl -w net.ipv4.ip_forward=1
-  CLOUD
+user_data = <<-CLOUD
+#cloud-config
+package_update: true
+users:
+  - name: deploy
+    groups: [sudo]
+    sudo: "ALL=(ALL) NOPASSWD:ALL"
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - ${var.ssh_public_key}
+runcmd:
+  - sysctl -w net.ipv4.ip_forward=1
+CLOUD
 }
 
 # ───────────────────────────────────────────────
 # AGENT NODES
 # ───────────────────────────────────────────────
 resource "hcloud_server" "agents" {
+  depends_on = [hcloud_network_subnet.subnet]
   count        = var.agent_count
   name         = "k3s-${var.client}-agent-${count.index}"
   server_type  = var.server_type
@@ -122,15 +154,15 @@ resource "hcloud_server" "agents" {
     network_id = hcloud_network.net.id
   }
 
-  user_data = <<-CLOUD
-  #cloud-config
-  package_update: true
-  users:
-    - name: deploy
-      groups: [sudo]
-      sudo: "ALL=(ALL) NOPASSWD:ALL"
-      shell: /bin/bash
-      ssh_authorized_keys:
-        - ${var.ssh_public_key}
-  CLOUD
+user_data = <<-CLOUD
+#cloud-config
+package_update: true
+users:
+  - name: deploy
+    groups: [sudo]
+    sudo: "ALL=(ALL) NOPASSWD:ALL"
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - ${var.ssh_public_key}
+CLOUD
 }

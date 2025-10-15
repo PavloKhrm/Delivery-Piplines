@@ -44,12 +44,12 @@
         flat: yes
       register: kubeconfig_fetch
 
-    - name: Replace localhost with master IP in kubeconfig
+    - name: Replace localhost endpoint with master IP in kubeconfig
       delegate_to: localhost
-      lineinfile:
+      replace:
         path: kubeconfig_master.yaml
-        regexp: '127\.0\.0\.1'
-        line: "{{ ansible_host }}"
+        regexp: 'server: https://127\.0\.0\.1:6443'
+        replace: 'server: https://{{ ansible_host }}:6443'
 
     - name: Retrieve K3s cluster token
       shell: cat /var/lib/rancher/k3s/server/node-token

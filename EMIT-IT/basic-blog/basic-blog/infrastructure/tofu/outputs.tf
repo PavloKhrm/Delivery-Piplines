@@ -1,4 +1,3 @@
-
 # ───────────────────────────────────────────────
 # OUTPUTS (Used by Ansible and Debugging)
 # ───────────────────────────────────────────────
@@ -17,27 +16,26 @@ output "agent_ips" {
 
 # Full Ansible inventory in YAML
 output "ansible_inventory" {
-  description = "YAML-encoded Ansible inventory for this client"
   value = yamlencode({
     all = {
       children = {
         k3s_master = {
           hosts = {
-            for i, s in hcloud_server.master :
-            "master${i+1}" => {
+            for idx, s in hcloud_server.master[*] :
+            "master${idx + 1}" => {
               ansible_host                 = s.ipv4_address
               ansible_user                 = "deploy"
-              ansible_ssh_private_key_file = "~/.ssh/your-ci"
+              ansible_ssh_private_key_file = pathexpand(replace(var.ssh_key_path, ".pub", ""))
             }
           }
         }
         k3s_agents = {
           hosts = {
-            for i, s in hcloud_server.agents :
-            "agent${i+1}" => {
+            for idx, s in hcloud_server.agents[*] :
+            "agent${idx + 1}" => {
               ansible_host                 = s.ipv4_address
               ansible_user                 = "deploy"
-              ansible_ssh_private_key_file = "~/.ssh/your-ci"
+              ansible_ssh_private_key_file = pathexpand(replace(var.ssh_key_path, ".pub", ""))
             }
           }
         }

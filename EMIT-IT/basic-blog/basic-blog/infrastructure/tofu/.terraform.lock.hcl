@@ -5,6 +5,7 @@ provider "registry.opentofu.org/hashicorp/random" {
   version     = "3.5.1"
   constraints = "~> 3.5.0"
   hashes = [
+    "h1:tEjsRimDnNiKLOHatMMmJjmTlqNH81gjqSPbzZ85ocw=",
     "h1:tW+G7lgqbHUtraKHPWuotYHlME1vcAf50YvOeHQlGHg=",
     "zh:0002dd4c79453da5bf1bb9c52172a25d042a571f6df131b7c9ced3d1f8f3eb44",
     "zh:49b0f8c2bd5632799aa6113e0e46acaa7d008f927665a41a1f8e8559fe6d8165",
@@ -24,6 +25,7 @@ provider "registry.opentofu.org/hetznercloud/hcloud" {
   constraints = "~> 1.45.0"
   hashes = [
     "h1:BEE0B6hv1ZAmTLIO12uqIm7s3oSjmGzZLm6OzudlxAw=",
+    "h1:GrYK7Nk83TyHY9RjNtA95XP9oXKECKmNnzdv3oW3pXM=",
     "zh:1c4b44a698cfaca215bdbadaf92669dd23533210c3cbf32895fbf4ff7acf6c24",
     "zh:2915f8385559694e5097d8d0df16358200e9f0d9efb80559e9ea0bd072d792b9",
     "zh:3a6b37b0bba50d263bd3dba26185bde13c825e59b6b301ab3f9f45686a21456b",

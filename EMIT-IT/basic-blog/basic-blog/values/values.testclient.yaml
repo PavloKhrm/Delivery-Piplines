@@ -1,67 +1,25 @@
 global:
-  domain: testclient.local        # ingress domain for this client
-  clientName: testclient          # used for naming
+  domain: "{{ client_domain }}"
+  clientName: "{{ client_namespace }}"
 
 secrets:
-  mysqlRootPassword: "password"   # from your .env
-  redisPassword: "password"
-  elasticPassword: "password"
-  appSessionSecret: "YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWE="
+  mysqlRootPassword: "{{ lookup('password', '/dev/null length=16 chars=ascii_letters') }}"
+  redisPassword: "{{ lookup('password', '/dev/null length=16 chars=ascii_letters') }}"
+  elasticPassword: "{{ lookup('password', '/dev/null length=16 chars=ascii_letters') }}"
+  appSessionSecret: "{{ lookup('password', '/dev/null length=32 chars=ascii_letters') }}"
 
 backend:
   image:
     repository: zhicheng029/basic-backend
-    tag: latest
+    tag: "{{ backend_tag | default('latest') }}"
     pullPolicy: Always
-  migrate:
-    enabled: false
   env:
-    # Application
-    APP_ENV: "development"
-    APP_NAME: "My Blog"
-    APP_URL: "http://testclient-backend:3000"
-    APP_FRONTEND_DOMAIN: "testclient.local"
-    APP_FRONTEND_URL: "http://testclient.local"
-    APP_PORT: "3000"
-    APP_SESSION_SECRET: "YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWE="
-    APP_SESSION_COOKIE: "basic-api-session"
-    APP_TIMEZONE: "UTC"
-    APP_CONTACT_MAIL: "info@emit-it.com"
-    APP_CONTACT_WEBSITE: "https://emit-it.com"
-
-    # Mail transport (can stay as localhost if MailHog is bundled in same pod, else set service name)
-    MAIL_HOST: "localhost"
-    MAIL_PORT: "1025"
-    MAIL_AUTH_USER: ""
-    MAIL_AUTH_PASSWORD: ""
-    MAIL_DEFAULT_FROM: '"Blog" <no-reply@blog.local>'
-
-    # Database
-    DATABASE_HOST: "testclient-mysql"
-    DATABASE_PORT: "3306"
-    DATABASE_USERNAME: "root"
-    DATABASE_PASSWORD: "password"
-    DATABASE_NAME: "basic_api_db"
-
-    # Elasticsearch
+    DATABASE_HOST: "{{ client_namespace }}-mysql"
+    REDIS_HOST: "{{ client_namespace }}-redis-master"
     ELASTIC_NODE_ENDPOINT: "http://opensearch-cluster-master:9200"
-    ELASTIC_USERNAME: "admin"
-    ELASTIC_PASSWORD: "StrongP@ssw0rd123!"
-    ELASTIC_PORT: "9200"
-
-    OPENSEARCH_INITIAL_ADMIN_PASSWORD: "StrongP@ssw0rd123!"
-
-    # Redis
-    REDIS_HOST: "testclient-redis-master"
-    REDIS_PASSWORD: "password"
-    REDIS_CACHE_TTL: "3600000"
-    REDIS_KEY_PREFIX: "basic-api:"
-
 
 frontend:
   image:
     repository: zhicheng029/basic-frontend
-    tag: latest
+    tag: "{{ frontend_tag | default('latest') }}"
     pullPolicy: Always
-  env:
-    APP_FRONTEND_URL: "http://testclient.local"

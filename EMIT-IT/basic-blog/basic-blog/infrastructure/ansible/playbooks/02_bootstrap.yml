@@ -14,6 +14,20 @@
 
   tasks:
     # -------------------------------
+    # Ensure Helm is installed
+    # -------------------------------
+    - name: Ensure Helm is installed
+      shell: |
+        curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+      args:
+        executable: /bin/bash
+      retries: 3
+      delay: 10
+      register: helm_install
+      until: helm_install.rc == 0
+      delegate_to: "{{ inventory_hostname }}"
+
+    # -------------------------------
     # Helm repositories
     # -------------------------------
     - name: Add Helm repositories
@@ -40,7 +54,8 @@
           --set service.type=NodePort \
           --set ingressClass.enabled=true \
           --set ingressClass.isDefaultClass=true \
-          --wait --timeout 5m
+          --wait --timeout 5m \
+          --kubeconfig /etc/rancher/k3s/k3s.yaml
       retries: 3
       delay: 10
       register: traefik_result
@@ -138,4 +153,16 @@
           kind: Namespace
           metadata:
             name: "{{ client_namespace }}"
+      delegate_to: "{{ inventory_hostname }}"
+
+    # -------------------------------
+    # Security Cleanup: Remove sudo privileges from deploy
+    # -------------------------------
+    - name: Remove temporary sudo permissions from deploy
+      become: true
+      lineinfile:
+        path: /etc/sudoers
+        state: absent
+        regexp: '^deploy ALL='
+        validate: 'visudo -cf %s'
       delegate_to: "{{ inventory_hostname }}"
