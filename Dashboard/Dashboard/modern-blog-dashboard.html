@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Manager</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="logo">
+                <img src="images/logo.svg" alt="Emit IT Logo">
+                <span>Blog Manager</span>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="#" class="nav-link active" onclick="showSection('overview')">
+                        <span class="nav-icon">📊</span>
+                        <span>Overview</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="showSection('blogs')">
+                        <span class="nav-icon">🌍</span>
+                        <span>Blogs</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="openCreateModal()">
+                        <span class="nav-icon">+</span>
+                        <span>Create Blog</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <h1 id="page-title">Dashboard Overview</h1>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" onclick="refreshData()">
+                        <span class="btn-icon">🔄</span>
+                        <span>Refresh</span>
+                    </button>
+                    <button class="btn btn-primary" onclick="openCreateModal()">
+                        <span class="btn-icon">+</span>
+                        <span>New Blog</span>
+                    </button>
+                </div>
+            </header>
+
+                <!-- Status Message -->
+                <div id="status-message" class="status-message">
+                    <span id="status-icon">ℹ️</span>
+                    <span id="status-text">System Ready</span>
+                </div>
+
+            <!-- Overview Section -->
+            <section id="overview-section" class="section">
+                <!-- Stats Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card fade-in">
+                        <div class="stat-header">
+                            <span class="stat-title">Total Blogs</span>
+                            <div class="stat-icon primary">🌍</div>
+                        </div>
+                        <div class="stat-value" id="total-blogs">-</div>
+                        <div class="stat-change positive">
+                            <span>↗</span>
+                            <span>All systems operational</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card fade-in">
+                        <div class="stat-header">
+                            <span class="stat-title">Running</span>
+                            <div class="stat-icon success">✅</div>
+                        </div>
+                        <div class="stat-value" id="running-blogs">-</div>
+                        <div class="stat-change positive">
+                            <span>●</span>
+                            <span>Healthy</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card fade-in">
+                        <div class="stat-header">
+                            <span class="stat-title">Total Pods</span>
+                            <div class="stat-icon info">📦</div>
+                        </div>
+                        <div class="stat-value" id="total-pods">-</div>
+                        <div class="stat-change positive">
+                            <span>⚡</span>
+                            <span>Active</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card fade-in">
+                        <div class="stat-header">
+                            <span class="stat-title">Namespaces</span>
+                            <div class="stat-icon warning">⚙️</div>
+                        </div>
+                        <div class="stat-value" id="total-namespaces">-</div>
+                        <div class="stat-change positive">
+                            <span>●</span>
+                            <span>Configured</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Blogs -->
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2 class="section-title">Recent Blogs</h2>
+                        <button class="btn btn-secondary btn-sm" onclick="showSection('blogs')">
+                            View All
+                        </button>
+                    </div>
+                    <div id="recent-blogs" class="blog-grid" hx-get="/api/blogs" hx-trigger="load" hx-target="this">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            <span style="margin-left: 1rem;">Loading blogs...</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Blogs Section -->
+            <section id="blogs-section" class="section" style="display: none;">
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2 class="section-title">All Blogs</h2>
+                        <div class="header-actions">
+                            <button class="btn btn-secondary btn-sm" onclick="refreshData()">
+                                <span>🔄</span>
+                                <span>Refresh</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="all-blogs" class="blog-grid" hx-get="/api/blogs" hx-trigger="load" hx-target="this">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            <span style="margin-left: 1rem;">Loading blogs...</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Create Blog Modal -->
+    <div id="create-modal" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2 class="modal-title">Create New Blog</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            
+            <form hx-post="/api/create-blog" hx-target="#status-message" hx-swap="outerHTML" hx-trigger="submit" hx-ext="response-targets" hx-indicator="#create-modal .htmx-indicator">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="client-name">Blog Name</label>
+                        <input type="text" id="client-name" name="clientName" class="form-input" placeholder="my-awesome-blog" pattern="^[a-z0-9][a-z0-9\-]*[a-z0-9]$" required oninput="updateDomainPreview()">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="domain-preview">Domain Preview</label>
+                        <input type="text" id="domain-preview" class="form-input" value="[blog-name].emit-it.local" readonly>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="environment">Environment</label>
+                        <select id="environment" name="environment" class="form-select">
+                            <option value="dev">Development</option>
+                            <option value="staging">Staging</option>
+                            <option value="production">Production</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="replicas">Initial Pods</label>
+                        <select id="replicas" name="replicas" class="form-select">
+                            <option value="1">1 Pod (Basic)</option>
+                            <option value="2">2 Pods (Balanced)</option>
+                            <option value="3">3 Pods (High Availability)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <span class="htmx-indicator" style="display: none;">
+                            <span class="spinner" style="width: 1rem; height: 1rem; margin-right: 0.5rem;"></span>
+                        </span>
+                        <span>▶️ Create Blog</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Command Logs Panel -->
+    <div id="command-panel" class="command-panel">
+        <div class="command-panel-header" onclick="toggleCommandPanel()">
+            <div class="command-panel-title">
+                <span class="panel-icon">⚙️</span>
+                <span>System Monitor</span>
+            </div>
+            <div class="command-panel-controls">
+                <div class="autoscroll-container">
+                    <input type="checkbox" id="autoscroll-checkbox" class="autoscroll-checkbox" checked>
+                    <label for="autoscroll-checkbox" class="autoscroll-label">Auto-scroll</label>
+                </div>
+                <button class="command-panel-toggle" onclick="event.stopPropagation(); refreshLogs()" title="Refresh Logs">
+                    <span class="control-icon">🔄</span>
+                </button>
+                <button class="command-panel-toggle" onclick="event.stopPropagation(); clearLogs()" title="Clear Logs">
+                    <span class="control-icon">✕</span>
+                </button>
+                <button class="command-panel-toggle" onclick="event.stopPropagation(); toggleCommandPanel()" title="Toggle Panel">
+                    <span id="panel-toggle-icon">▼</span>
+                </button>
+            </div>
+        </div>
+        
+        <div class="command-panel-content">
+            <div class="command-tabs">
+                <button class="command-tab active" onclick="switchCommandTab('logs')">System Logs</button>
+                <button class="command-tab" onclick="switchCommandTab('commands')">Command Output</button>
+            </div>
+            
+            <div id="command-logs" class="command-output logs" 
+                 hx-get="/logs" 
+                 hx-trigger="load, every 30s" 
+                 hx-target="this">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <span style="margin-left: 1rem;">Loading logs...</span>
+                </div>
+            </div>
+            
+            <div id="command-output" class="command-output commands" style="display: none;">
+                <div style="color: var(--text-secondary); font-style: italic;">
+                    Command output will appear here when commands are executed...
+                </div>
+            </div>
+            
+            <div class="command-status">
+                <div class="status-indicator" id="status-indicator"></div>
+                <span id="status-text">System Ready</span>
+                <span style="margin-left: auto;" id="last-updated">Last updated: --</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/script.js"></script>
+</body>
+</html>
