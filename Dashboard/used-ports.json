@@ -1,0 +1,692 @@
+﻿{
+    "30067":  {
+                  "allocatedAt":  "2025-10-01T22:28:17Z",
+                  "service":  "frontend",
+                  "client":  "meow"
+              },
+    "30082":  {
+                  "allocatedAt":  "2025-10-01T22:43:02Z",
+                  "service":  "elasticsearch",
+                  "client":  "meow"
+              },
+    "30112":  {
+                  "allocatedAt":  "2025-10-06T06:08:54Z",
+                  "service":  "elasticsearch",
+                  "client":  "test-tech-2"
+              },
+    "30123":  {
+                  "allocatedAt":  "2025-10-06T06:17:39Z",
+                  "service":  "redis",
+                  "client":  "test-new"
+              },
+    "30043":  {
+                  "allocatedAt":  "2025-10-01T21:53:06Z",
+                  "service":  "frontend",
+                  "client":  "meow"
+              },
+    "30135":  {
+                  "allocatedAt":  "2025-10-06T14:54:38Z",
+                  "service":  "redis",
+                  "client":  "zhi-and-bill"
+              },
+    "30137":  {
+                  "allocatedAt":  "2025-10-06T14:54:38Z",
+                  "service":  "mailcrab",
+                  "client":  "zhi-and-bill"
+              },
+    "30046":  {
+                  "allocatedAt":  "2025-10-01T21:53:06Z",
+                  "service":  "elasticsearch",
+                  "client":  "meow"
+              },
+    "30045":  {
+                  "allocatedAt":  "2025-10-01T21:53:06Z",
+                  "service":  "redis",
+                  "client":  "meow"
+              },
+    "30060":  {
+                  "allocatedAt":  "2025-10-01T22:08:30Z",
+                  "service":  "backend",
+                  "client":  "meow"
+              },
+    "30048":  {
+                  "allocatedAt":  "2025-10-01T22:00:02Z",
+                  "service":  "backend",
+                  "client":  "meow"
+              },
+    "30119":  {
+                  "allocatedAt":  "2025-10-06T06:13:31Z",
+                  "service":  "mailcrab",
+                  "client":  "hope-for-luck"
+              },
+    "30029":  {
+                  "allocatedAt":  "2025-09-30T23:24:24Z",
+                  "service":  "mailcrab",
+                  "client":  "my-company"
+              },
+    "30115":  {
+                  "allocatedAt":  "2025-10-06T06:13:31Z",
+                  "service":  "frontend",
+                  "client":  "hope-for-luck"
+              },
+    "30024":  {
+                  "allocatedAt":  "2025-09-30T23:24:24Z",
+                  "service":  "backend",
+                  "client":  "my-company"
+              },
+    "30016":  {
+                  "allocatedAt":  "2025-09-30T20:19:20Z",
+                  "service":  "elasticsearch",
+                  "client":  "demo"
+              },
+    "30027":  {
+                  "allocatedAt":  "2025-09-30T23:24:24Z",
+                  "service":  "redis",
+                  "client":  "my-company"
+              },
+    "30073":  {
+                  "allocatedAt":  "2025-10-01T22:37:30Z",
+                  "service":  "frontend",
+                  "client":  "meow"
+              },
+    "30013":  {
+                  "allocatedAt":  "2025-09-30T20:19:20Z",
+                  "service":  "frontend",
+                  "client":  "demo"
+              },
+    "30022":  {
+                  "allocatedAt":  "2025-09-30T23:01:17Z",
+                  "service":  "elasticsearch",
+                  "client":  "tech-blog"
+              },
+    "30074":  {
+                  "allocatedAt":  "2025-10-01T22:37:30Z",
+                  "service":  "mysql",
+                  "client":  "meow"
+              },
+    "30000":  {
+                  "allocatedAt":  "2025-09-29T11:08:08Z",
+                  "service":  "backend",
+                  "client":  "acme-corp"
+              },
+    "30079":  {
+                  "allocatedAt":  "2025-10-01T22:43:02Z",
+                  "service":  "frontend",
+                  "client":  "meow"
+              },
+    "30092":  {
+                  "allocatedAt":  "2025-10-06T03:14:01Z",
+                  "service":  "mysql",
+                  "client":  "tech-blog2"
+              },
+    "30083":  {
+                  "allocatedAt":  "2025-10-01T22:43:02Z",
+                  "service":  "mailcrab",
+                  "client":  "meow"
+              },
+    "30118":  {
+                  "allocatedAt":  "2025-10-06T06:13:31Z",
+                  "service":  "elasticsearch",
+                  "client":  "hope-for-luck"
+              },
+    "30072":  {
+                  "allocatedAt":  "2025-10-01T22:37:30Z",
+                  "service":  "backend",
+                  "client":  "meow"
+              },
+    "30008":  {
+                  "allocatedAt":  "2025-09-30T20:10:58Z",
+                  "service":  "mysql",
+                  "client":  "demo"
+              },
+    "30051":  {
+                  "allocatedAt":  "2025-10-01T22:00:02Z",
+                  "service":  "redis",
+                  "client":  "meow"
+              },
+    "30002":  {
+                  "allocatedAt":  "2025-09-29T11:08:08Z",
+                  "service":  "mysql",
+                  "client":  "acme-corp"
+              },
+    "30056":  {
+                  "allocatedAt":  "2025-10-01T22:04:13Z",
+                  "service":  "mysql",
+                  "client":  "meow"
+              },
+    "30007":  {
+                  "allocatedAt":  "2025-09-30T20:10:58Z",
+                  "service":  "frontend",
+                  "client":  "demo"
+              },
+    "30088":  {
+                  "allocatedAt":  "2025-10-02T00:31:35Z",
+                  "service":  "elasticsearch",
+                  "client":  "emit-it"
+              },
+    "30004":  {
+                  "allocatedAt":  "2025-09-29T11:08:08Z",
+                  "service":  "elasticsearch",
+                  "client":  "acme-corp"
+              },
+    "30087":  {
+                  "allocatedAt":  "2025-10-02T00:31:35Z",
+                  "service":  "redis",
+                  "client":  "emit-it"
+              },
+    "30058":  {
+                  "allocatedAt":  "2025-10-01T22:04:13Z",
+                  "service":  "elasticsearch",
+                  "client":  "meow"
+              },
+    "30009":  {
+                  "allocatedAt":  "2025-09-30T20:10:58Z",
+                  "service":  "redis",
+                  "client":  "demo"
+              },
+    "30050":  {
+                  "allocatedAt":  "2025-10-01T22:00:02Z",
+                  "service":  "mysql",
+                  "client":  "meow"
+              },
+    "30034":  {
+                  "allocatedAt":  "2025-09-30T23:33:41Z",
+                  "service":  "elasticsearch",
+                  "client":  "company"
+              },
+    "30042":  {
+                  "allocatedAt":  "2025-10-01T21:53:06Z",
+                  "service":  "backend",
+                  "client":  "meow"
+              },
+    "30031":  {
+                  "allocatedAt":  "2025-09-30T23:33:41Z",
+                  "service":  "frontend",
+                  "client":  "company"
+              },
+    "30041":  {
+                  "allocatedAt":  "2025-09-30T23:42:06Z",
+                  "service":  "mailcrab",
+                  "client":  "mycompany"
+              },
+    "30032":  {
+                  "allocatedAt":  "2025-09-30T23:33:41Z",
+                  "service":  "mysql",
+                  "client":  "company"
+              },
+    "30108":  {
+                  "allocatedAt":  "2025-10-06T06:08:54Z",
+                  "service":  "backend",
+                  "client":  "test-tech-2"
+              },
+    "30105":  {
+                  "allocatedAt":  "2025-10-06T06:00:30Z",
+                  "service":  "redis",
+                  "client":  "tech-blog23"
+              },
+    "30091":  {
+                  "allocatedAt":  "2025-10-06T03:14:01Z",
+                  "service":  "frontend",
+                  "client":  "tech-blog2"
+              },
+    "30028":  {
+                  "allocatedAt":  "2025-09-30T23:24:24Z",
+                  "service":  "elasticsearch",
+                  "client":  "my-company"
+              },
+    "30116":  {
+                  "allocatedAt":  "2025-10-06T06:13:31Z",
+                  "service":  "mysql",
+                  "client":  "hope-for-luck"
+              },
+    "30063":  {
+                  "allocatedAt":  "2025-10-01T22:08:30Z",
+                  "service":  "redis",
+                  "client":  "meow"
+              },
+    "30017":  {
+                  "allocatedAt":  "2025-09-30T20:19:20Z",
+                  "service":  "mailcrab",
+                  "client":  "demo"
+              },
+    "30026":  {
+                  "allocatedAt":  "2025-09-30T23:24:24Z",
+                  "service":  "mysql",
+                  "client":  "my-company"
+              },
+    "30095":  {
+                  "allocatedAt":  "2025-10-06T03:14:01Z",
+                  "service":  "mailcrab",
+                  "client":  "tech-blog2"
+              },
+    "30014":  {
+                  "allocatedAt":  "2025-09-30T20:19:20Z",
+                  "service":  "mysql",
+                  "client":  "demo"
+              },
+    "30021":  {
+                  "allocatedAt":  "2025-09-30T23:01:17Z",
+                  "service":  "redis",
+                  "client":  "tech-blog"
+              },
+    "30040":  {
+                  "allocatedAt":  "2025-09-30T23:42:06Z",
+                  "service":  "elasticsearch",
+                  "client":  "mycompany"
+              },
+    "30011":  {
+                  "allocatedAt":  "2025-09-30T20:10:58Z",
+                  "service":  "mailcrab",
+                  "client":  "demo"
+              },
+    "30130":  {
+                  "allocatedAt":  "2025-10-06T06:20:41Z",
+                  "service":  "elasticsearch",
+                  "client":  "pls-work-blog"
+              },
+    "30081":  {
+                  "allocatedAt":  "2025-10-01T22:43:02Z",
+                  "service":  "redis",
+                  "client":  "meow"
+              },
+    "30052":  {
+                  "allocatedAt":  "2025-10-01T22:00:02Z",
+                  "service":  "elasticsearch",
+                  "client":  "meow"
+              },
+    "30003":  {
+                  "allocatedAt":  "2025-09-29T11:08:08Z",
+                  "service":  "redis",
+                  "client":  "acme-corp"
+              },
+    "30057":  {
+                  "allocatedAt":  "2025-10-01T22:04:13Z",
+                  "service":  "redis",
+                  "client":  "meow"
+              },
+    "30066":  {
+                  "allocatedAt":  "2025-10-01T22:28:17Z",
+                  "service":  "backend",
+                  "client":  "meow"
+              },
+    "30054":  {
+                  "allocatedAt":  "2025-10-01T22:04:13Z",
+                  "service":  "backend",
+                  "client":  "meow"
+              },
+    "30005":  {
+                  "allocatedAt":  "2025-09-29T11:08:08Z",
+                  "service":  "mailcrab",
+                  "client":  "acme-corp"
+              },
+    "30086":  {
+                  "allocatedAt":  "2025-10-02T00:31:35Z",
+                  "service":  "mysql",
+                  "client":  "emit-it"
+              },
+    "30113":  {
+                  "allocatedAt":  "2025-10-06T06:08:54Z",
+                  "service":  "mailcrab",
+                  "client":  "test-tech-2"
+              },
+    "30122":  {
+                  "allocatedAt":  "2025-10-06T06:17:39Z",
+                  "service":  "mysql",
+                  "client":  "test-new"
+              },
+    "30085":  {
+                  "allocatedAt":  "2025-10-02T00:31:35Z",
+                  "service":  "frontend",
+                  "client":  "emit-it"
+              },
+    "30038":  {
+                  "allocatedAt":  "2025-09-30T23:42:06Z",
+                  "service":  "mysql",
+                  "client":  "mycompany"
+              },
+    "30098":  {
+                  "allocatedAt":  "2025-10-06T03:20:29Z",
+                  "service":  "mysql",
+                  "client":  "demo-dev"
+              },
+    "30035":  {
+                  "allocatedAt":  "2025-09-30T23:33:41Z",
+                  "service":  "mailcrab",
+                  "client":  "company"
+              },
+    "30069":  {
+                  "allocatedAt":  "2025-10-01T22:28:17Z",
+                  "service":  "redis",
+                  "client":  "meow"
+              },
+    "30036":  {
+                  "allocatedAt":  "2025-09-30T23:42:06Z",
+                  "service":  "backend",
+                  "client":  "mycompany"
+              },
+    "30061":  {
+                  "allocatedAt":  "2025-10-01T22:08:30Z",
+                  "service":  "frontend",
+                  "client":  "meow"
+              },
+    "30033":  {
+                  "allocatedAt":  "2025-09-30T23:33:41Z",
+                  "service":  "redis",
+                  "client":  "company"
+              },
+    "30109":  {
+                  "allocatedAt":  "2025-10-06T06:08:54Z",
+                  "service":  "frontend",
+                  "client":  "test-tech-2"
+              },
+    "30065":  {
+                  "allocatedAt":  "2025-10-01T22:08:30Z",
+                  "service":  "mailcrab",
+                  "client":  "meow"
+              },
+    "30106":  {
+                  "allocatedAt":  "2025-10-06T06:00:30Z",
+                  "service":  "elasticsearch",
+                  "client":  "tech-blog23"
+              },
+    "30023":  {
+                  "allocatedAt":  "2025-09-30T23:01:17Z",
+                  "service":  "mailcrab",
+                  "client":  "tech-blog"
+              },
+    "30049":  {
+                  "allocatedAt":  "2025-10-01T22:00:02Z",
+                  "service":  "frontend",
+                  "client":  "meow"
+              },
+    "30127":  {
+                  "allocatedAt":  "2025-10-06T06:20:41Z",
+                  "service":  "frontend",
+                  "client":  "pls-work-blog"
+              },
+    "30117":  {
+                  "allocatedAt":  "2025-10-06T06:13:31Z",
+                  "service":  "redis",
+                  "client":  "hope-for-luck"
+              },
+    "30020":  {
+                  "allocatedAt":  "2025-09-30T23:01:17Z",
+                  "service":  "mysql",
+                  "client":  "tech-blog"
+              },
+    "30075":  {
+                  "allocatedAt":  "2025-10-01T22:37:30Z",
+                  "service":  "redis",
+                  "client":  "meow"
+              },
+    "30047":  {
+                  "allocatedAt":  "2025-10-01T21:53:06Z",
+                  "service":  "mailcrab",
+                  "client":  "meow"
+              },
+    "30129":  {
+                  "allocatedAt":  "2025-10-06T06:20:41Z",
+                  "service":  "redis",
+                  "client":  "pls-work-blog"
+              },
+    "30076":  {
+                  "allocatedAt":  "2025-10-01T22:37:30Z",
+                  "service":  "elasticsearch",
+                  "client":  "meow"
+              },
+    "30099":  {
+                  "allocatedAt":  "2025-10-06T03:20:29Z",
+                  "service":  "redis",
+                  "client":  "demo-dev"
+              },
+    "30096":  {
+                  "allocatedAt":  "2025-10-06T03:20:29Z",
+                  "service":  "backend",
+                  "client":  "demo-dev"
+              },
+    "30131":  {
+                  "allocatedAt":  "2025-10-06T06:20:41Z",
+                  "service":  "mailcrab",
+                  "client":  "pls-work-blog"
+              },
+    "30019":  {
+                  "allocatedAt":  "2025-09-30T23:01:17Z",
+                  "service":  "frontend",
+                  "client":  "tech-blog"
+              },
+    "30044":  {
+                  "allocatedAt":  "2025-10-01T21:53:06Z",
+                  "service":  "mysql",
+                  "client":  "meow"
+              },
+    "30132":  {
+                  "allocatedAt":  "2025-10-06T14:54:38Z",
+                  "service":  "backend",
+                  "client":  "zhi-and-bill"
+              },
+    "30102":  {
+                  "allocatedAt":  "2025-10-06T06:00:30Z",
+                  "service":  "backend",
+                  "client":  "tech-blog23"
+              },
+    "30053":  {
+                  "allocatedAt":  "2025-10-01T22:00:02Z",
+                  "service":  "mailcrab",
+                  "client":  "meow"
+              },
+    "30062":  {
+                  "allocatedAt":  "2025-10-01T22:08:30Z",
+                  "service":  "mysql",
+                  "client":  "meow"
+              },
+    "30103":  {
+                  "allocatedAt":  "2025-10-06T06:00:30Z",
+                  "service":  "frontend",
+                  "client":  "tech-blog23"
+              },
+    "30001":  {
+                  "allocatedAt":  "2025-09-29T11:08:08Z",
+                  "service":  "frontend",
+                  "client":  "acme-corp"
+              },
+    "30093":  {
+                  "allocatedAt":  "2025-10-06T03:14:01Z",
+                  "service":  "redis",
+                  "client":  "tech-blog2"
+              },
+    "30055":  {
+                  "allocatedAt":  "2025-10-01T22:04:13Z",
+                  "service":  "frontend",
+                  "client":  "meow"
+              },
+    "30068":  {
+                  "allocatedAt":  "2025-10-01T22:28:17Z",
+                  "service":  "mysql",
+                  "client":  "meow"
+              },
+    "30089":  {
+                  "allocatedAt":  "2025-10-02T00:31:35Z",
+                  "service":  "mailcrab",
+                  "client":  "emit-it"
+              },
+    "30030":  {
+                  "allocatedAt":  "2025-09-30T23:33:41Z",
+                  "service":  "backend",
+                  "client":  "company"
+              },
+    "30121":  {
+                  "allocatedAt":  "2025-10-06T06:17:39Z",
+                  "service":  "frontend",
+                  "client":  "test-new"
+              },
+    "30084":  {
+                  "allocatedAt":  "2025-10-02T00:31:35Z",
+                  "service":  "backend",
+                  "client":  "emit-it"
+              },
+    "30110":  {
+                  "allocatedAt":  "2025-10-06T06:08:54Z",
+                  "service":  "mysql",
+                  "client":  "test-tech-2"
+              },
+    "30039":  {
+                  "allocatedAt":  "2025-09-30T23:42:06Z",
+                  "service":  "redis",
+                  "client":  "mycompany"
+              },
+    "30136":  {
+                  "allocatedAt":  "2025-10-06T14:54:38Z",
+                  "service":  "elasticsearch",
+                  "client":  "zhi-and-bill"
+              },
+    "30059":  {
+                  "allocatedAt":  "2025-10-01T22:04:13Z",
+                  "service":  "mailcrab",
+                  "client":  "meow"
+              },
+    "30037":  {
+                  "allocatedAt":  "2025-09-30T23:42:06Z",
+                  "service":  "frontend",
+                  "client":  "mycompany"
+              },
+    "30114":  {
+                  "allocatedAt":  "2025-10-06T06:13:31Z",
+                  "service":  "backend",
+                  "client":  "hope-for-luck"
+              },
+    "30120":  {
+                  "allocatedAt":  "2025-10-06T06:17:39Z",
+                  "service":  "backend",
+                  "client":  "test-new"
+              },
+    "30107":  {
+                  "allocatedAt":  "2025-10-06T06:00:30Z",
+                  "service":  "mailcrab",
+                  "client":  "tech-blog23"
+              },
+    "30080":  {
+                  "allocatedAt":  "2025-10-01T22:43:02Z",
+                  "service":  "mysql",
+                  "client":  "meow"
+              },
+    "30104":  {
+                  "allocatedAt":  "2025-10-06T06:00:30Z",
+                  "service":  "mysql",
+                  "client":  "tech-blog23"
+              },
+    "30025":  {
+                  "allocatedAt":  "2025-09-30T23:24:24Z",
+                  "service":  "frontend",
+                  "client":  "my-company"
+              },
+    "30071":  {
+                  "allocatedAt":  "2025-10-01T22:28:17Z",
+                  "service":  "mailcrab",
+                  "client":  "meow"
+              },
+    "30015":  {
+                  "allocatedAt":  "2025-09-30T20:19:20Z",
+                  "service":  "redis",
+                  "client":  "demo"
+              },
+    "30125":  {
+                  "allocatedAt":  "2025-10-06T06:17:39Z",
+                  "service":  "mailcrab",
+                  "client":  "test-new"
+              },
+    "30006":  {
+                  "allocatedAt":  "2025-09-30T20:10:58Z",
+                  "service":  "backend",
+                  "client":  "demo"
+              },
+    "30012":  {
+                  "allocatedAt":  "2025-09-30T20:19:20Z",
+                  "service":  "backend",
+                  "client":  "demo"
+              },
+    "30128":  {
+                  "allocatedAt":  "2025-10-06T06:20:41Z",
+                  "service":  "mysql",
+                  "client":  "pls-work-blog"
+              },
+    "30077":  {
+                  "allocatedAt":  "2025-10-01T22:37:30Z",
+                  "service":  "mailcrab",
+                  "client":  "meow"
+              },
+    "30124":  {
+                  "allocatedAt":  "2025-10-06T06:17:39Z",
+                  "service":  "elasticsearch",
+                  "client":  "test-new"
+              },
+    "30126":  {
+                  "allocatedAt":  "2025-10-06T06:20:41Z",
+                  "service":  "backend",
+                  "client":  "pls-work-blog"
+              },
+    "30078":  {
+                  "allocatedAt":  "2025-10-01T22:43:02Z",
+                  "service":  "backend",
+                  "client":  "meow"
+              },
+    "30097":  {
+                  "allocatedAt":  "2025-10-06T03:20:29Z",
+                  "service":  "frontend",
+                  "client":  "demo-dev"
+              },
+    "30133":  {
+                  "allocatedAt":  "2025-10-06T14:54:38Z",
+                  "service":  "frontend",
+                  "client":  "zhi-and-bill"
+              },
+    "30094":  {
+                  "allocatedAt":  "2025-10-06T03:14:01Z",
+                  "service":  "elasticsearch",
+                  "client":  "tech-blog2"
+              },
+    "30018":  {
+                  "allocatedAt":  "2025-09-30T23:01:17Z",
+                  "service":  "backend",
+                  "client":  "tech-blog"
+              },
+    "30100":  {
+                  "allocatedAt":  "2025-10-06T03:20:29Z",
+                  "service":  "elasticsearch",
+                  "client":  "demo-dev"
+              },
+    "30134":  {
+                  "allocatedAt":  "2025-10-06T14:54:38Z",
+                  "service":  "mysql",
+                  "client":  "zhi-and-bill"
+              },
+    "30101":  {
+                  "allocatedAt":  "2025-10-06T03:20:29Z",
+                  "service":  "mailcrab",
+                  "client":  "demo-dev"
+              },
+    "30070":  {
+                  "allocatedAt":  "2025-10-01T22:28:17Z",
+                  "service":  "elasticsearch",
+                  "client":  "meow"
+              },
+    "30010":  {
+                  "allocatedAt":  "2025-09-30T20:10:58Z",
+                  "service":  "elasticsearch",
+                  "client":  "demo"
+              },
+    "30064":  {
+                  "allocatedAt":  "2025-10-01T22:08:30Z",
+                  "service":  "elasticsearch",
+                  "client":  "meow"
+              },
+    "30090":  {
+                  "allocatedAt":  "2025-10-06T03:14:01Z",
+                  "service":  "backend",
+                  "client":  "tech-blog2"
+              },
+    "30111":  {
+                  "allocatedAt":  "2025-10-06T06:08:54Z",
+                  "service":  "redis",
+                  "client":  "test-tech-2"
+              }
+}
