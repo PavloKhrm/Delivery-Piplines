@@ -1,30 +1,33 @@
 [CmdletBinding()]
 param(
-  [Parameter(Mandatory=$true)]
-  [string]$ClientId
+    [Parameter(Mandatory=$true)]
+    [string]$ClientId
 )
 
-# BaseDomain will now be read from the Helm chart's values.yaml
 $ErrorActionPreference = 'Stop'
+
+# Get the folder where this script is located
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
+
+# Build absolute paths to the chart and values.yaml
+$ChartPath = Join-Path $ScriptDir "charts\client-stack"
+$ValuesFile = Join-Path $ChartPath "values.yaml"
+
 $ns = "client-$ClientId"
-$chartPath = ".\k8s\charts\client-stack"
 
 Write-Host "Creating namespace $ns..." -ForegroundColor Cyan
 kubectl create namespace $ns --dry-run=client -o yaml | kubectl apply -f - | Out-Null
 
 Write-Host "Installing client stack for $ClientId..." -ForegroundColor Cyan
-# The script now relies on the baseDomain from values.yaml
 helm upgrade --install $ClientId `
-  $chartPath `
-  --namespace $ns `
-  --create-namespace `
-  --set clientId=$ClientId `
-  --wait --timeout 5m
+    $ChartPath `
+    --namespace $ns `
+    --create-namespace `
+    --set clientId=$ClientId `
+    --wait --timeout 5m
 
-# No more host file updates needed!
-
-# We can read the baseDomain from the values file to provide the correct URLs
-$baseDomainLine = Get-Content ".\k8s\charts\client-stack\values.yaml" | Select-String -SimpleMatch "baseDomain:"
+# Read baseDomain from the values file
+$baseDomainLine = Get-Content $ValuesFile | Select-String -SimpleMatch "baseDomain:"
 $BaseDomain = ($baseDomainLine -split ":")[1].Trim()
 
 Write-Host "Done. Open:" -ForegroundColor Cyan

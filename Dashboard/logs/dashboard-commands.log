@@ -1,0 +1,27 @@
+[2025-10-20T22:20:03.851Z] [SUCCESS] Command completed successfully
+[2025-10-20T22:20:11.790Z] [INFO] Creating new client: bill
+[2025-10-20T22:20:36.447Z] [SUCCESS] Client "bill" created successfully
+[2025-10-20T22:20:36.449Z] [DEBUG] Command output: Creating namespace client-bill...
+Installing client stack for bill...
+Release "bill" does not exist. Installing it now.
+NAME: bill
+LAST DEPLOYED: Tue Oct 21 00:20:16 2025
+NAMESPACE: client-bill
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+Done. Open:
+  http://bill.emitit.local
+  http://phpmyadmin.bill.emitit.local
+  http://mail.bill.emitit.local
+
+[2025-10-20T22:20:55.681Z] [INFO] Executing command: kubectl get namespaces -o json
+[2025-10-20T22:20:57.849Z] [SUCCESS] Command completed successfully
+[2025-10-20T22:20:57.858Z] [INFO] Executing command: kubectl get pods -n client-bill -o json
+[2025-10-20T22:21:00.038Z] [SUCCESS] Command completed successfully
+[2025-10-20T22:21:00.060Z] [INFO] Executing command: kubectl get pods -n client-deri -o json
+[2025-10-20T22:21:02.138Z] [SUCCESS] Command completed successfully
+[2025-10-20T22:21:02.156Z] [INFO] Executing command: kubectl get pods -n client-momo -o json
+[2025-10-20T22:21:04.000Z] [SUCCESS] Command completed successfully
+[2025-10-20T22:21:04.010Z] [INFO] Executing command: kubectl get pods -n client-niki -o json
+[2025-10-20T22:21:05.595Z] [SUCCESS] Command completed successfully

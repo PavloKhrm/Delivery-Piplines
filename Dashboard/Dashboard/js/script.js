@@ -1,8 +1,7 @@
-// Global state
+
 let allBlogs = [];
 let currentSection = 'overview';
 
-// Initialize dashboard
 document.addEventListener('DOMContentLoaded', function() {
     showSection('overview');
     updateDomainPreview();
@@ -12,28 +11,24 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function showSection(sectionName) {
-    // Hide all sections
     document.querySelectorAll('.section').forEach(section => {
         section.style.display = 'none';
     });
 
-    // Show selected section
     document.getElementById(`${sectionName}-section`).style.display = 'block';
 
-    // Update navigation
     document.querySelectorAll('.nav-link').forEach(link => {
         link.classList.remove('active');
     });
     document.querySelector(`[onclick="showSection('${sectionName}')"]`)?.classList.add('active');
     document.querySelector(`[onclick="openCreateModal()"]`)?.classList.remove('active');
 
-    // Update page title
     const titles = {
         'overview': 'Dashboard Overview',
-        'blogs': 'All Blogs',
+        'clients': 'All clients',
         'logs': 'System Logs'
     };
-    document.getElementById('page-title').textContent = titles[sectionName] || 'Blog Manager';
+    document.getElementById('page-title').textContent = titles[sectionName] || 'Client Manager';
 
     currentSection = sectionName;
 }
@@ -51,7 +46,6 @@ function closeModal(event) {
     const modal = document.getElementById('create-modal');
     modal.classList.remove('show');
     
-    // Reset form
     const form = modal.querySelector('form');
     if (form) {
         form.reset();
@@ -59,7 +53,6 @@ function closeModal(event) {
     document.getElementById('client-name').value = '';
     updateDomainPreview();
     
-    // Clear any status messages
     const statusMessage = document.getElementById('status-message');
     if (statusMessage) {
         statusMessage.classList.remove('show');
@@ -68,13 +61,12 @@ function closeModal(event) {
 
 function updateDomainPreview() {
     const clientName = document.getElementById('client-name').value.trim();
-    const preview = clientName ? `${clientName}.emit-it.local` : '[blog-name].emit-it.local';
+    const preview = clientName ? `${clientName}.emitit.com` : '[client-name].emitit.com';
     document.getElementById('domain-preview').value = preview;
 }
 
 async function fetchAllBlogs() {
     try {
-        // Get all namespaces that start with "blog-"
         const namespacesCmd = `kubectl get namespaces -o json`;
         const namespacesResponse = await fetch('/run-command', {
             method: 'POST',
@@ -85,9 +77,8 @@ async function fetchAllBlogs() {
         
         if (namespacesResponse.ok && namespacesData.output) {
             const allNamespacesData = JSON.parse(namespacesData.output);
-            const namespaces = allNamespacesData.items.filter(ns => ns.metadata.name.startsWith('blog-'));
+            const namespaces = allNamespacesData.items.filter(ns => ns.metadata.name.startsWith('client-'));
             
-            // Get pods for each namespace
             const allBlogsData = [];
             for (const ns of namespaces) {
                 const namespace = ns.metadata.name;
@@ -101,8 +92,8 @@ async function fetchAllBlogs() {
                 
                 if (podsResponse.ok && podsData.output) {
                     const pods = JSON.parse(podsData.output).items;
-                    const clientName = namespace.replace('blog-', '').replace(/-dev$|^-staging$|^-production$/, '');
-                    const domain = `${clientName}.emit-it.local`;
+                    const clientName = namespace.replace('client-', '').replace(/-dev$|^-staging$|^-production$/, '');
+                    const domain = `${clientName}.emitit.local`;
                     
                     allBlogsData.push({
                         namespace: namespace,
@@ -127,7 +118,7 @@ function renderBlogs() {
     const container = document.getElementById(blogsContainer);
     
     if (allBlogs.length === 0) {
-        container.innerHTML = '<div class="loading"><span>No blogs found. Create your first blog!</span></div>';
+        container.innerHTML = '<div class="loading"><span>No client found. Create your first client!</span></div>';
         return;
     }
 
@@ -165,18 +156,10 @@ function renderBlogs() {
                     </div>
                 </div>
                 <div class="blog-actions">
-                    <a href="https://${blog.domain}:8443" target="_blank" class="btn btn-primary btn-sm">
+                    <a href="http://${blog.domain}" target="_blank" class="btn btn-primary btn-sm">
                         <span>🌐</span>
                         <span>Visit</span>
                     </a>
-                    <button class="btn btn-secondary btn-sm" onclick="scaleBlog('${blog.namespace}', 'backend')">
-                        <span>📈</span>
-                        <span>Scale Backend</span>
-                    </button>
-                    <button class="btn btn-secondary btn-sm" onclick="scaleBlog('${blog.namespace}', 'frontend')">
-                        <span>📈</span>
-                        <span>Scale Frontend</span>
-                    </button>
                     <button class="btn btn-danger btn-sm" onclick="deleteBlog('${blog.namespace}')">
                         <span>🗑️</span>
                         <span>Delete</span>
@@ -215,12 +198,24 @@ async function scaleBlog(namespace, service) {
 }
 
 async function deleteBlog(namespace) {
-    if (confirm(`Are you sure you want to delete the blog in namespace "${namespace}"? This will remove all data!`)) {
+    if (confirm(`Are you sure you want to delete the client in namespace "${namespace}"? This will remove all data!`)) {
         try {
-            const cmd = `kubectl delete namespace ${namespace}`;
-            await runCommand(cmd);
-            showStatusMessage(`Blog "${namespace}" deleted`, "success");
+            const response = await fetch('/api/delete-blog', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ namespace: namespace })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to delete client');
+            }
+
+            logCommand(`kubectl delete namespace ${namespace}`, 'Command executed via secure API.');
+
+            showStatusMessage(`Client "${namespace}" deleted`, "success");
             fetchAllBlogs();
+
         } catch (error) {
             showStatusMessage(`Error deleting: ${error.message}`, "error");
         }
@@ -238,7 +233,6 @@ async function refreshLogs() {
             const logsContainer = document.getElementById('command-logs');
             logsContainer.textContent = data.logs || 'No logs available yet.';
             
-            // Auto-scroll only if enabled
             if (document.getElementById('autoscroll-checkbox').checked) {
                 logsContainer.scrollTop = logsContainer.scrollHeight;
             }
@@ -276,7 +270,6 @@ async function runCommand(cmd) {
     try {
         updateCommandStatus('warning', 'Executing Command...');
         
-        // Log command to panel first
         logCommand(cmd, 'Executing...');
         
         const response = await fetch('/run-command', {
@@ -286,7 +279,6 @@ async function runCommand(cmd) {
         });
         const data = await response.json();
         
-        // Update command output in panel
         const commandOutput = document.getElementById('command-output');
         const lastEntry = commandOutput.textContent.lastIndexOf('Executing...');
         if (lastEntry !== -1) {
@@ -301,7 +293,6 @@ ${'='.repeat(80)}
 
 ` + afterExecuting;
             
-            // Auto-scroll if enabled
             if (document.getElementById('autoscroll-checkbox').checked) {
                 commandOutput.scrollTop = commandOutput.scrollHeight;
             }
@@ -354,12 +345,10 @@ function formatDuration(ms) {
     return `${seconds}s`;
 }
 
-// Command Panel Functions
 function initializeCommandPanel() {
     updateCommandStatus('ready', 'System Ready');
     updateLastUpdated();
     
-    // Auto-expand panel on first load
     setTimeout(() => {
         document.getElementById('command-panel').classList.add('expanded');
     }, 1000);
@@ -390,17 +379,14 @@ function toggleCommandPanel() {
 }
 
 function switchCommandTab(tabName) {
-    // Update tab buttons
     document.querySelectorAll('.command-tab').forEach(tab => {
         tab.classList.remove('active');
     });
     event.target.classList.add('active');
     
-    // Show/hide content
     document.getElementById('command-logs').style.display = tabName === 'logs' ? 'block' : 'none';
     document.getElementById('command-output').style.display = tabName === 'commands' ? 'block' : 'none';
     
-    // Auto-scroll to bottom if enabled
     if (document.getElementById('autoscroll-checkbox').checked) {
         const activeOutput = tabName === 'logs' ? 
             document.getElementById('command-logs') : 
@@ -437,14 +423,12 @@ ${'='.repeat(80)}
     
     commandOutput.textContent += logEntry;
     
-    // Auto-scroll only if enabled
     if (document.getElementById('autoscroll-checkbox').checked) {
         setTimeout(() => {
             commandOutput.scrollTop = commandOutput.scrollHeight;
         }, 100);
     }
     
-    // Switch to commands tab
     document.querySelectorAll('.command-tab').forEach(tab => {
         tab.classList.remove('active');
     });
@@ -460,7 +444,6 @@ ${'='.repeat(80)}
     updateLastUpdated();
 }
 
-// HTMX event handlers
 document.body.addEventListener('htmx:beforeRequest', function(evt) {
     if (evt.detail.pathInfo.requestPath.includes('/api/create-blog')) {
         console.log('Starting blog creation...');
@@ -477,10 +460,8 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
             showStatusMessage("Blog created successfully!", "success");
             updateCommandStatus('ready', 'Blog Created');
             
-            // Close modal immediately
             closeModal();
             
-            // Refresh blog data after a short delay to allow deployment to start
             setTimeout(() => {
                 fetchAllBlogs();
                 refreshLogs();
@@ -492,7 +473,6 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
         }
     }
     
-    // Handle logs updates with auto-scroll
     if (evt.detail.pathInfo.requestPath.includes('/logs')) {
         const logsContainer = document.getElementById('command-logs');
         if (logsContainer && document.getElementById('autoscroll-checkbox').checked) {
@@ -506,20 +486,17 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
 document.body.addEventListener('htmx:responseError', function(evt) {
     console.log('HTMX responseError:', evt.detail);
     if (evt.detail.pathInfo.requestPath.includes('/api/create-blog')) {
-        showStatusMessage("Error creating blog: " + evt.detail.xhr.responseText, "error");
+        showStatusMessage("Error creating client: " + evt.detail.xhr.responseText, "error");
         updateCommandStatus('error', 'Blog Creation Error');
     }
 });
 
-// Also handle form submission directly as a fallback
 document.addEventListener('DOMContentLoaded', function() {
     const createForm = document.querySelector('#create-modal form');
     if (createForm) {
         createForm.addEventListener('submit', function(e) {
             console.log('Form submitted via direct event listener');
-            // Let HTMX handle it, but also set up a fallback
             setTimeout(() => {
-                // If HTMX doesn't close the modal after 5 seconds, close it manually
                 const modal = document.getElementById('create-modal');
                 if (modal && modal.classList.contains('show')) {
                     console.log('Fallback: Closing modal manually');
@@ -531,10 +508,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-
-// Auto-refresh blog data every 30 seconds
+/*
 setInterval(() => {
     if (currentSection === 'overview' || currentSection === 'blogs') {
         fetchAllBlogs();
     }
 }, 30000);
+*/
