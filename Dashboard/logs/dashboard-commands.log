@@ -25,3 +25,93 @@ Done. Open:
 [2025-10-20T22:21:04.000Z] [SUCCESS] Command completed successfully
 [2025-10-20T22:21:04.010Z] [INFO] Executing command: kubectl get pods -n client-niki -o json
 [2025-10-20T22:21:05.595Z] [SUCCESS] Command completed successfully
+[2025-10-21T08:21:35.101Z] [INFO] Executing command: kubectl get namespaces -o json
+[2025-10-21T08:21:36.723Z] [ERROR] Command failed: Command failed: kubectl get namespaces -o json
+E1021 10:21:36.665002   26984 memcache.go:265] "Unhandled Error" err="couldn't get current server API group list: Get \"https://127.0.0.1:61259/api?timeout=32s\": dial tcp 127.0.0.1:61259: connectex: No connection could be made because the target machine actively refused it."
+E1021 10:21:36.666355   26984 memcache.go:265] "Unhandled Error" err="couldn't get current server API group list: Get \"https://127.0.0.1:61259/api?timeout=32s\": dial tcp 127.0.0.1:61259: connectex: No connection could be made because the target machine actively refused it."
+E1021 10:21:36.668362   26984 memcache.go:265] "Unhandled Error" err="couldn't get current server API group list: Get \"https://127.0.0.1:61259/api?timeout=32s\": dial tcp 127.0.0.1:61259: connectex: No connection could be made because the target machine actively refused it."
+E1021 10:21:36.669732   26984 memcache.go:265] "Unhandled Error" err="couldn't get current server API group list: Get \"https://127.0.0.1:61259/api?timeout=32s\": dial tcp 127.0.0.1:61259: connectex: No connection could be made because the target machine actively refused it."
+E1021 10:21:36.670994   26984 memcache.go:265] "Unhandled Error" err="couldn't get current server API group list: Get \"https://127.0.0.1:61259/api?timeout=32s\": dial tcp 127.0.0.1:61259: connectex: No connection could be made because the target machine actively refused it."
+Unable to connect to the server: dial tcp 127.0.0.1:61259: connectex: No connection could be made because the target machine actively refused it.
+
+[2025-10-21T08:21:36.724Z] [ERROR] Command output: E1021 10:21:36.665002   26984 memcache.go:265] "Unhandled Error" err="couldn't get current server API group list: Get \"https://127.0.0.1:61259/api?timeout=32s\": dial tcp 127.0.0.1:61259: connectex: No connection could be made because the target machine actively refused it."
+E1021 10:21:36.666355   26984 memcache.go:265] "Unhandled Error" err="couldn't get current server API group list: Get \"https://127.0.0.1:61259/api?timeout=32s\": dial tcp 127.0.0.1:61259: connectex: No connection could be made because the target machine actively refused it."
+E1021 10:21:36.668362   26984 memcache.go:265] "Unhandled Error" err="couldn't get current server API group list: Get \"https://127.0.0.1:61259/api?timeout=32s\": dial tcp 127.0.0.1:61259: connectex: No connection could be made because the target machine actively refused it."
+E1021 10:21:36.669732   26984 memcache.go:265] "Unhandled Error" err="couldn't get current server API group list: Get \"https://127.0.0.1:61259/api?timeout=32s\": dial tcp 127.0.0.1:61259: connectex: No connection could be made because the target machine actively refused it."
+E1021 10:21:36.670994   26984 memcache.go:265] "Unhandled Error" err="couldn't get current server API group list: Get \"https://127.0.0.1:61259/api?timeout=32s\": dial tcp 127.0.0.1:61259: connectex: No connection could be made because the target machine actively refused it."
+Unable to connect to the server: dial tcp 127.0.0.1:61259: connectex: No connection could be made because the target machine actively refused it.
+
+[2025-10-21T08:22:10.040Z] [INFO] Executing command: kubectl get namespaces -o json
+[2025-10-21T08:22:12.069Z] [SUCCESS] Command completed successfully
+[2025-10-21T08:22:12.078Z] [INFO] Executing command: kubectl get pods -n client-janna -o json
+[2025-10-21T08:22:12.889Z] [SUCCESS] Command completed successfully
+[2025-10-21T08:22:12.897Z] [INFO] Executing command: kubectl get pods -n client-martijn -o json
+[2025-10-21T08:22:13.692Z] [SUCCESS] Command completed successfully
+[2025-10-21T08:22:13.701Z] [INFO] Executing command: kubectl get pods -n client-onana -o json
+[2025-10-21T08:22:14.577Z] [SUCCESS] Command completed successfully
+[2025-10-21T08:22:14.585Z] [INFO] Executing command: kubectl get pods -n client-rene -o json
+[2025-10-21T08:22:15.310Z] [SUCCESS] Command completed successfully
+[2025-10-21T08:22:51.672Z] [INFO] Creating new client: jann
+[2025-10-21T08:23:02.917Z] [SUCCESS] Client "jann" created successfully
+[2025-10-21T08:23:02.922Z] [DEBUG] Command output: Creating namespace client-jann...
+Installing client stack for jann...
+Release "jann" does not exist. Installing it now.
+NAME: jann
+LAST DEPLOYED: Tue Oct 21 10:22:54 2025
+NAMESPACE: client-jann
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+Done. Open:
+  http://jann.emitit.local
+  http://phpmyadmin.jann.emitit.local
+  http://mail.jann.emitit.local
+
+[2025-10-21T08:23:14.045Z] [INFO] Executing command: kubectl get namespaces -o json
+[2025-10-21T08:23:14.862Z] [SUCCESS] Command completed successfully
+[2025-10-21T08:23:14.870Z] [INFO] Executing command: kubectl get pods -n client-jann -o json
+[2025-10-21T08:23:15.672Z] [SUCCESS] Command completed successfully
+[2025-10-21T08:23:15.680Z] [INFO] Executing command: kubectl get pods -n client-janna -o json
+[2025-10-21T08:23:16.429Z] [SUCCESS] Command completed successfully
+[2025-10-21T08:23:16.439Z] [INFO] Executing command: kubectl get pods -n client-martijn -o json
+[2025-10-21T08:23:17.171Z] [SUCCESS] Command completed successfully
+[2025-10-21T08:23:17.179Z] [INFO] Executing command: kubectl get pods -n client-onana -o json
+[2025-10-21T08:23:17.909Z] [SUCCESS] Command completed successfully
+[2025-10-21T08:23:17.918Z] [INFO] Executing command: kubectl get pods -n client-rene -o json
+[2025-10-21T08:23:18.654Z] [SUCCESS] Command completed successfully
+[2025-10-21T08:25:31.750Z] [INFO] Executing safe command: kubectl delete namespace client-onana
+[2025-10-21T08:25:48.360Z] [INFO] Executing safe command: kubectl delete namespace client-jann
+[2025-10-21T08:26:22.437Z] [SUCCESS] Namespace client-onana deleted successfully
+[2025-10-21T08:26:22.447Z] [INFO] Executing command: kubectl get namespaces -o json
+[2025-10-21T08:26:23.125Z] [SUCCESS] Command completed successfully
+[2025-10-21T08:26:23.133Z] [INFO] Executing command: kubectl get pods -n client-jann -o json
+[2025-10-21T08:26:23.805Z] [SUCCESS] Command completed successfully
+[2025-10-21T08:26:23.815Z] [INFO] Executing command: kubectl get pods -n client-janna -o json
+[2025-10-21T08:26:23.903Z] [INFO] Executing command: kubectl get namespaces -o json
+[2025-10-21T08:26:24.523Z] [SUCCESS] Command completed successfully
+[2025-10-21T08:26:24.599Z] [SUCCESS] Command completed successfully
+[2025-10-21T08:26:24.610Z] [INFO] Executing command: kubectl get pods -n client-jann -o json
+[2025-10-21T08:26:25.305Z] [SUCCESS] Command completed successfully
+[2025-10-21T08:26:25.314Z] [INFO] Executing command: kubectl get pods -n client-janna -o json
+[2025-10-21T08:26:26.036Z] [SUCCESS] Command completed successfully
+[2025-10-21T08:26:26.046Z] [INFO] Executing command: kubectl get pods -n client-martijn -o json
+[2025-10-21T08:26:26.708Z] [SUCCESS] Command completed successfully
+[2025-10-21T08:26:26.717Z] [INFO] Executing command: kubectl get pods -n client-rene -o json
+[2025-10-21T08:26:27.378Z] [SUCCESS] Command completed successfully
+[2025-10-21T08:26:38.616Z] [SUCCESS] Namespace client-jann deleted successfully
+[2025-10-21T08:26:53.407Z] [INFO] Executing command: kubectl get namespaces -o json
+[2025-10-21T08:26:54.057Z] [SUCCESS] Command completed successfully
+[2025-10-21T08:26:54.066Z] [INFO] Executing command: kubectl get pods -n client-janna -o json
+[2025-10-21T08:26:54.751Z] [SUCCESS] Command completed successfully
+[2025-10-21T08:26:54.758Z] [INFO] Executing command: kubectl get pods -n client-martijn -o json
+[2025-10-21T08:26:55.431Z] [SUCCESS] Command completed successfully
+[2025-10-21T08:26:55.439Z] [INFO] Executing command: kubectl get pods -n client-rene -o json
+[2025-10-21T08:26:56.112Z] [SUCCESS] Command completed successfully
+[2025-10-21T08:29:07.003Z] [INFO] Executing command: kubectl get namespaces -o json
+[2025-10-21T08:29:07.702Z] [SUCCESS] Command completed successfully
+[2025-10-21T08:29:07.709Z] [INFO] Executing command: kubectl get pods -n client-janna -o json
+[2025-10-21T08:29:08.408Z] [SUCCESS] Command completed successfully
+[2025-10-21T08:29:08.417Z] [INFO] Executing command: kubectl get pods -n client-martijn -o json
+[2025-10-21T08:29:09.115Z] [SUCCESS] Command completed successfully
+[2025-10-21T08:29:09.123Z] [INFO] Executing command: kubectl get pods -n client-rene -o json
+[2025-10-21T08:29:09.986Z] [SUCCESS] Command completed successfully
