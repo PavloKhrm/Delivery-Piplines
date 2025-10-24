@@ -8,8 +8,8 @@ metadata:
 spec:
   ports:
     - name: http
-      port: 1080
-      targetPort: 1080
+      port: {{ $mail.ports.ui }}
+      targetPort: {{ $mail.ports.ui }}
   selector:
     app: {{ .Release.Name }}-mailcrab
 ---
@@ -20,8 +20,8 @@ metadata:
 spec:
   ports:
     - name: smtp
-      port: 1025
-      targetPort: 1025
+      port: {{ $mail.ports.smtp }}
+      targetPort: {{ $mail.ports.smtp }}
   selector:
     app: {{ .Release.Name }}-mailcrab
 ---
@@ -41,10 +41,10 @@ spec:
     spec:
       containers:
         - name: mailcrab
-          image: marlonb/mailcrab:latest
+          image: "{{ $mail.image.repository }}:{{ $mail.image.tag }}"
           ports:
-            - containerPort: 1080
-            - containerPort: 1025
+            - containerPort: {{ $mail.ports.ui }}
+            - containerPort: {{ $mail.ports.smtp }}
           resources:
 {{- toYaml $res | nindent 12 }}
 ---
@@ -53,7 +53,7 @@ kind: Ingress
 metadata:
   name: {{ .Release.Name }}-mailcrab
 spec:
-  ingressClassName: traefik
+  ingressClassName: {{ .Values.ingressClassName }}
   rules:
     - host: {{ $mail.uiHostPrefix }}.{{ .Values.clientId }}.{{ .Values.baseDomain }}
       http:
@@ -64,5 +64,5 @@ spec:
               service:
                 name: {{ .Release.Name }}-mailcrab-ui
                 port:
-                  number: 1080
+                  number: {{ $mail.ports.ui }}
 {{- end }}
