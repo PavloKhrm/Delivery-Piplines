@@ -13,7 +13,7 @@ kind: Deployment
 metadata:
   name: {{ .Release.Name }}-redis
 spec:
-  replicas: 1
+  replicas: {{ if .Values.suspended }}0{{ else }}1{{ end }}
   selector:
     matchLabels:
       app: {{ .Release.Name }}-redis
@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
         - name: redis
-          image: redis:7.4.3-alpine
+          image: "{{ .Values.redis.image.repository }}:{{ .Values.redis.image.tag }}"
           ports: [ { containerPort: 6379 } ]
           env:
             - { name: ALLOW_EMPTY_PASSWORD, value: "no" }
