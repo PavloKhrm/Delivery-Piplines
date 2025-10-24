@@ -39,6 +39,12 @@ phpmyadmin:
 mailcrab:
   enabled: true
   uiHostPrefix: "mail"
+  image:
+    repository: marlonb/mailcrab
+    tag: latest
+  ports:
+    ui: 1080
+    smtp: 1025
 
 elasticsearch:
   enabled: true
