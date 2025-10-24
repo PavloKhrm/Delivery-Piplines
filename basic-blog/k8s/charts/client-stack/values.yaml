@@ -36,6 +36,18 @@ website:
 phpmyadmin:
   enabled: true
 
+mysql:
+  image:
+    repository: mysql
+    tag: 8.4.5
+  port: 3306
+
+redis:
+  image:
+    repository: redis
+    tag: 7.4.3-alpine
+  port: 6379
+
 mailcrab:
   enabled: true
   uiHostPrefix: "mail"
