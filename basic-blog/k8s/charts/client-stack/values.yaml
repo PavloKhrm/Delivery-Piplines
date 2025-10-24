@@ -42,6 +42,8 @@ mailcrab:
 
 elasticsearch:
   enabled: true
-  image: "docker.elastic.co/elasticsearch/elasticsearch-wolfi:8.18.1"
+  image:
+    repository: docker.elastic.co/elasticsearch/elasticsearch-wolfi
+    tag: 8.18.1
   port: 9200
   javaOpts: "-Xms256m -Xmx256m"
