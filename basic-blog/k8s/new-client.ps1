@@ -7,8 +7,8 @@ param(
 # BaseDomain will now be read from the Helm chart's values.yaml
 $ErrorActionPreference = 'Stop'
 $ns = "client-$ClientId"
-$chartPath = ".\k8s\charts\client-stack"
-$envPath   = ".\k8s\env"
+$chartPath = Join-Path $PSScriptRoot "charts/client-stack"
+$envPath   = ".\env"
 
 # -------------------------------
 # Load environment variables (optional)
