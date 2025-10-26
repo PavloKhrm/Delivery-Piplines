@@ -5,6 +5,34 @@ param (
   [string]$BaseDomain
 )
 
+# ---------------------------------
+# Load environment variables (optional)
+# ---------------------------------
+$envPath = ".\k8s\env"
+$envFile = Join-Path $envPath "$ClientId.env"
+
+if (-not (Test-Path $envFile)) {
+  $envFile = Join-Path $envPath "global.env"
+}
+
+if (Test-Path $envFile) {
+  Write-Host "Loading environment from $envFile" -ForegroundColor Cyan
+  Get-Content $envFile | ForEach-Object {
+    if ($_ -match '^(?<key>[^#=]+)=(?<value>.+)$') {
+      [Environment]::SetEnvironmentVariable($matches.key.Trim(), $matches.value.Trim())
+    }
+  }
+  $BaseDomain = $env:BASE_DOMAIN
+} else {
+  Write-Host "No .env file found. Falling back to values.yaml." -ForegroundColor Yellow
+  $chartPath = ".\k8s\charts\client-stack"
+  $baseDomainLine = Get-Content "$chartPath\values.yaml" | Select-String -SimpleMatch "baseDomain:"
+  $BaseDomain = ($baseDomainLine -split ":")[1].Trim()
+}
+
+# ---------------------------------
+# Update hosts file
+# ---------------------------------
 $hostsPath = "$env:SystemRoot\System32\drivers\etc\hosts"
 $lines = @(
   "$IP $ClientId.$BaseDomain",
@@ -34,3 +62,9 @@ if ($toAdd) {
 } else {
   Write-Host "Hosts file already contains client entries." -ForegroundColor DarkGreen
 }
+
+Write-Host ""
+Write-Host "Accessible URLs:" -ForegroundColor Cyan
+Write-Host "  http://$ClientId.$BaseDomain"
+Write-Host "  http://phpmyadmin.$ClientId.$BaseDomain"
+Write-Host "  http://mail.$ClientId.$BaseDomain"
