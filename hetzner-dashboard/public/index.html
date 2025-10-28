@@ -11,7 +11,7 @@
     <h1>Hetzner Dashboard</h1>
 
     <form id="create-form" class="row">
-      <input id="client" class="input" list="client-list" placeholder="client name" required>
+      <input id="client" class="input" list="client-list" placeholder="VPS name" required>
       <datalist id="client-list"></datalist>
 
       <select id="type" class="input" required>
@@ -26,14 +26,14 @@
         <option value="" disabled selected>Loading images…</option>
       </select>
 
-      <button class="btn" type="submit">Create</button>
+      <button class="btn" type="submit">Create a new VPS</button>
     </form>
 
     <hr> 
     <h2>Create Kubernetes Client</h2>
     <form id="create-client-form">
         <input type="text" id="clientName" class="input" placeholder="Enter new client name" required>
-        <button class="btn" type="submit">Create Client</button>
+        <button class="btn" type="submit">Create Kubernetes Client</button>
     </form>
     <pre id="client-create-output"></pre>
 
