@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: client-a-config
-  namespace: client-a
-data:
-  DATABASE_NAME: "clienta_db"
-  APP_TIMEZONE: "UTC"
-  ELASTIC_PORT: "9200"

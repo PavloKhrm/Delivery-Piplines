@@ -4,6 +4,4 @@ if [ -z "$1" ]; then
   exit 1
 fi
 
-# Run the PowerShell script, passing along the client ID.
-# 'pwsh' is the command for PowerShell on Mac/Linux.
-pwsh ./k8s/new-client.ps1 -ClientId "$1"
+pwsh ./kind/new-client.ps1 -ClientId "$1"

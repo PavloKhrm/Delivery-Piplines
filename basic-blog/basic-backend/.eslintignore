@@ -1,7 +1,0 @@
-.vscode/*
-/docker
-/dist
-/node_modules
-/src/database/migrations
-.DS_Store
-/data

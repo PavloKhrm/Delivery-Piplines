@@ -1,2 +1,2 @@
 @echo off
-powershell -ExecutionPolicy Bypass -File ".\k8s\new-client.ps1" -ClientId %1
+powershell -ExecutionPolicy Bypass -File ".\kind\new-client.ps1" -ClientId %1
