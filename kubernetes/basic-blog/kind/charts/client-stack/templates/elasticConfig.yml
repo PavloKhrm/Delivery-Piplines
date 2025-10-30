@@ -1,0 +1,11 @@
+{{- if .Values.elasticsearch.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-es-config
+data:
+  elasticsearch.yml: |
+    discovery.type: single-node
+    xpack.security.enabled: true
+    xpack.security.http.ssl.enabled: false
+{{- end }}

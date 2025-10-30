@@ -1,0 +1,6 @@
+apiVersion: v2
+name: client-stack
+description: Per-client isolated stack (mysql, redis, phpmyadmin, website)
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

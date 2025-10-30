@@ -1,0 +1,4 @@
+[2025-10-30T17:43:54.011Z] [INFO] Executing command: kubectl get namespaces -o json
+[2025-10-30T17:43:55.219Z] [SUCCESS] Command completed successfully
+[2025-10-30T17:43:55.250Z] [INFO] Executing command: kubectl get pods -n client-yehmen -o json
+[2025-10-30T17:43:56.003Z] [SUCCESS] Command completed successfully

@@ -1,0 +1,47 @@
+clientId: emitit
+baseDomain: emitit.local
+storageClassName: ""
+ingressClassName: traefik
+suspended: false
+
+resources:
+  es01:
+    requests: { cpu: "250m", memory: "512Mi" }
+    limits:   { memory: "1Gi" }
+  mysql:
+    requests: { cpu: "100m", memory: "256Mi" }
+    limits:   { memory: "1Gi" }
+  redis:
+    requests: { cpu: "50m",  memory: "64Mi" }
+    limits:   { memory: "256Mi" }
+  website:
+    requests: { cpu: "50m",  memory: "128Mi" }
+    limits:   { memory: "256Mi" }
+  mailcrab:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+    limits:
+      memory: "256Mi"
+
+persistence:
+  mysql: { size: 10Gi }
+  redis: { size: 1Gi }
+  es01:  { size: 20Gi }
+
+website:
+  image: "nguyendo1234/basic-frontend:latest"
+  port: 80
+
+phpmyadmin:
+  enabled: true
+
+mailcrab:
+  enabled: true
+  uiHostPrefix: "mail"
+
+elasticsearch:
+  enabled: true
+  image: "docker.elastic.co/elasticsearch/elasticsearch-wolfi:8.18.1"
+  port: 9200
+  javaOpts: "-Xms256m -Xmx256m"
