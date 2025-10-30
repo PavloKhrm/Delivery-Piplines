@@ -1,7 +1,7 @@
 # EMIT-IT Full Deployment Prototype
 Delivery-Pipelines • Hetzner Cloud • OpenTofu • Ansible • K3s • Helm
 
-This README explains **what** to do, **why** you do it, **what to expect**, and **how to verify** each step. Every command is in its own fenced block. This prototype was stopped but in case you want to test this, I have created a readme for you to follow. Most important step is up untill Step 5. The other steps is to confirm if needed, provision script should download most of the things you need you might need to download KIND in wsl. It is not fully ready as this prototype was left off due to project scope so if something is not fully working such as SSL, DNS and some pods might not be fully running. But it does spawn VPS in hetzner and creates cluster and a isolated namespace all in one script, make sure you have a .env like in step 5 and step 4 if you dont have ssh in wsl.  
+This README explains **what** to do, **why** you do it, **what to expect**, and **how to verify** each step. Every command is in its own fenced block. This prototype was stopped but in case you want to test this, I have created a readme for you to follow. Most important step is up untill Step 5. The other steps is to confirm if needed, bootstrap and provision script should download most of the things you need you might need to download KIND in wsl. It is not fully ready as this prototype was left off due to project scope so if something is not fully working such as SSL, DNS and some pods might not be fully running. But it does spawn VPS in hetzner and creates cluster and a isolated namespace all in one script, make sure you have a .env like in step 5 and step 4 if you dont have ssh in wsl.  
 
 ---
 
