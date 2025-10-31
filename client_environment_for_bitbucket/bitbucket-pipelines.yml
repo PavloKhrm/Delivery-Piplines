@@ -1,0 +1,30 @@
+image: docker:24
+
+options:
+  docker: true
+
+pipelines:
+  branches:
+    main:
+      - step:
+          name: Build & Push 
+          services: [docker]
+          caches: [docker]
+          script:
+            - set -euo pipefail
+            - test -n "${DOCKERHUB_USER:-}" -a -n "${DOCKERHUB_TOKEN:-}" || { echo "Missing DOCKERHUB_USER or DOCKERHUB_TOKEN"; exit 1; }
+            - export DOCKER_BUILDKIT=0
+            - echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USER" --password-stdin
+            - export NS="$DOCKERHUB_USER"
+            - export SHA_TAG="$(date +%Y%m%d%H%M%S)-$BITBUCKET_COMMIT"
+            - docker build -t "${NS}/client-api:latest" -t "${NS}/client-api:${SHA_TAG}" ./backend
+            - docker push "${NS}/client-api:latest"
+            - docker push "${NS}/client-api:${SHA_TAG}"
+            - docker build -t "${NS}/client-web:latest" -t "${NS}/client-web:${SHA_TAG}" ./frontend
+            - docker push "${NS}/client-web:latest"
+            - docker push "${NS}/client-web:${SHA_TAG}"
+
+definitions:
+  services:
+    docker:
+      memory: 3072

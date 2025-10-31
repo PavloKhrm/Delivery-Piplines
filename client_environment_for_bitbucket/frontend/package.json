@@ -1,0 +1,12 @@
+{
+  "name": "client-web",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build --base=./",
+    "start": "vite preview --port 8080"
+  },
+  "dependencies": {
+    "vite": "^5.4.0"
+  }
+}

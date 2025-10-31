@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>Hetzner K8s Dashboard</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="https://unpkg.com/xterm@5.3.0/css/xterm.css">
+</head>
+<body>
+  <header class="container">
+    <h1>Hetzner K8s Dashboard</h1>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="create-cluster">Create Cluster</button>
+      <button class="tab" data-tab="create-client">Create Client</button>
+    </div>
+
+    <form id="create-cluster-form" class="row cardish tab-pane is-active" autocomplete="off">
+      <input id="cl-name" class="input" placeholder="cluster name (cp-...)" required>
+      <select id="cl-type" class="input" required>
+        <option value="" disabled selected>Loading server types…</option>
+      </select>
+      <select id="cl-loc" class="input" required>
+        <option value="" disabled selected>Loading locations…</option>
+      </select>
+      <select id="cl-image" class="input" required>
+        <option value="" disabled selected>Loading images…</option>
+      </select>
+      <button class="btn" type="submit">Create Cluster</button>
+    </form>
+
+    <form id="create-client-form" class="row cardish tab-pane" autocomplete="off">
+      <input id="client-id" class="input" placeholder="client id (e.g. client-a)" required>
+      <select id="client-cluster" class="input" required>
+        <option value="" disabled selected>Pick cluster…</option>
+      </select>
+      <select id="cln-type" class="input" required>
+        <option value="" disabled selected>Loading server types…</option>
+      </select>
+      <select id="cln-loc" class="input" required>
+        <option value="" disabled selected>Loading locations…</option>
+      </select>
+      <select id="cln-image" class="input" required>
+        <option value="" disabled selected>Loading images…</option>
+      </select>
+      <input id="api-image" class="input" placeholder="api image (registry/image:tag)">
+      <input id="web-image" class="input" placeholder="web image (registry/image:tag)">
+      <input id="api-port" class="input" type="number" min="1" max="65535" value="3000">
+      <input id="web-port" class="input" type="number" min="1" max="65535" value="80">
+      <button class="btn" type="submit">Create Client</button>
+    </form>    
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  </header>
+
+  <main class="container">
+    <h3 class="section-title">Clusters</h3>
+    <div id="clusters" class="grid"></div>
+
+    <h3 class="section-title">Clients</h3>
+    <div id="clients" class="grid"></div>
+
+    <h3 class="section-title">Servers</h3>
+    <div id="servers" class="grid"></div>
+  </main>
+
+  <template id="card-cluster">
+    <article class="tile">
+      <div class="tile__head">
+        <div class="tile__name cluster-name">Cluster</div>
+        <span class="badge">READY</span>
+      </div>
+      <div class="tile__body">
+        <div class="pill mono ip">-</div>
+        <div class="pill id">-</div>
+      </div>
+      <div class="tile__spec">
+        <div class="chip"><b>CP</b><span>control-plane</span></div>
+      </div>
+    </article>
+  </template>
+
+  <template id="card-client">
+    <article class="tile">
+      <div class="tile__head">
+        <div class="tile__name client-id">Client</div>
+        <span class="badge">READY</span>
+      </div>
+      <div class="tile__body">
+        <div class="pill mono ip">-</div>
+        <div class="pill">cluster: <span class="cluster-id">-</span></div>
+      </div>
+      <div class="tile__spec">
+        <div class="chip"><b>node</b><span class="node-name">-</span></div>
+      </div>
+    </article>
+  </template>
+
+  <template id="card-server">
+    <article class="tile">
+      <div class="tile__head">
+        <div class="tile__name name">Server</div>
+        <span class="badge status"></span>
+      </div>
+      <div class="tile__body">
+        <div class="pill mono ip">-</div>
+        <div class="pill type">-</div>
+        <div class="pill location">-</div>
+      </div>
+      <div class="tile__spec">
+        <div class="chip"><b class="cores">—</b><span>vCPU</span></div>
+        <div class="chip"><b class="ram">—</b><span>GB</span></div>
+        <div class="chip"><b class="disk">—</b><span>GB</span></div>
+      </div>
+    </article>
+  </template>
+
+  <div id="drawer" class="drawer" aria-hidden="true">
+    <div class="drawer__backdrop" data-close="1"></div>
+    <aside class="drawer__panel" role="dialog" aria-modal="true" aria-labelledby="drawer-title">
+      <header class="drawer__header">
+        <div>
+          <h3 id="drawer-title" class="drawer__title">Server</h3>
+          <div class="drawer__subtitle mono" id="drawer-subtitle"></div>
+        </div>
+        <button class="icon-btn" id="drawer-close" aria-label="Close">✕</button>
+      </header>
+
+      <section class="drawer__section">
+        <div class="grid-2">
+          <div class="kv"><span>ID</span><code class="mono copyable" id="d-id"></code></div>
+          <div class="kv"><span>Status</span><span id="d-status" class="badge"></span></div>
+          <div class="kv"><span>Client</span><span id="d-client"></span></div>
+          <div class="kv"><span>Location</span><span id="d-location"></span></div>
+          <div class="kv"><span>Type</span><span id="d-type"></span></div>
+          <div class="kv"><span>IP</span><code class="mono copyable" id="d-ip"></code></div>
+        </div>
+      </section>
+
+      <section class="drawer__section">
+        <div class="spec spec--inline">
+          <div class="chip"><b id="d-cores">—</b><span>vCPU</span></div>
+          <div class="chip"><b id="d-ram">—</b><span>GB RAM</span></div>
+          <div class="chip"><b id="d-disk">—</b><span>GB Disk</span></div>
+        </div>
+      </section>
+
+      <section class="drawer__section">
+        <div class="kv">
+          <span>Key file</span>
+          <span class="muted truncate copyable" id="d-keypath" title=""></span>
+        </div>
+        <details id="d-keybox" class="keybox">
+          <summary class="btn btn--ghost small">Show key</summary>
+          <pre class="key mono" id="d-keypre" hidden></pre>
+        </details>
+      </section>
+
+      <footer class="drawer__footer">
+        <div class="left-actions">
+          <button class="btn btn--danger" id="d-delete">Delete server</button>
+        </div>
+        <div class="right-actions">
+          <button class="btn btn--ghost" id="d-open-site">Open ingress</button>
+          <button class="btn" id="d-open-term">Open terminal</button>
+        </div>
+      </footer>
+    </aside>
+  </div>
+
+  <div id="term-modal" class="modal" aria-hidden="true">
+    <div class="modal__backdrop" data-close="1"></div>
+    <div class="modal__body" role="dialog" aria-modal="true" aria-labelledby="term-title">
+      <div class="modal__header">
+        <h3 id="term-title" class="modal__title">Server terminal</h3>
+        <div class="modal__actions">
+          <button id="term-copy" class="btn btn--ghost" title="Copy last output">Copy</button>
+          <button id="term-close" class="btn btn--danger">Close</button>
+        </div>
+      </div>
+      <div id="terminal" class="term"></div>
+      <div id="term-status" class="muted modal__status"></div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/xterm@5.3.0/lib/xterm.js"></script>
+  <script src="https://unpkg.com/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
+  <script src="/app.js" defer></script>
+</body>
+</html>
