@@ -1,0 +1,28 @@
+<!-- frontend/index.html -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Client Web</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:,">
+  <base href="./">
+</head>
+<body>
+  <main id="app">
+    <div class="card">
+      <h1>Welcome hi✨</h1>
+      <p>This is a shared frontend for all clients AronHahaha.</p>
+      <div class="row">
+        <button id="btnHello">Call API</button>
+        <button id="btnEcho">POST /api/echo</button>
+      </div>
+      <pre id="out" aria-live="polite"></pre>
+      <footer>
+        <span id="hint">Path-based Ingress is used. API is available at <code>/api/*</code>.</span>
+      </footer>
+    </div>
+  </main>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

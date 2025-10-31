@@ -1,0 +1,16 @@
+{
+  "lalala": {
+    "serverId": 111950074,
+    "ip": "195.201.239.12",
+    "clusterId": "111949227",
+    "nodeName": "lalala-node-1761922495332",
+    "created": 1761922592421
+  },
+  "lalalal": {
+    "serverId": 111950145,
+    "ip": "195.201.239.12",
+    "clusterId": "111949227",
+    "nodeName": "lalalal-node-1761922553946",
+    "created": 1761922648319
+  }
+}

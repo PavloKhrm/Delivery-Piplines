@@ -1,0 +1,9 @@
+{
+  "111949227": {
+    "serverId": 111949227,
+    "ip": "195.201.239.12",
+    "kubeconfigFile": "/Users/m1stakesequence/Desktop/hetzner/hetzner-dashboard/backend/lib/data/clusters/111949227/kubeconfig.yaml",
+    "tokenFile": "/Users/m1stakesequence/Desktop/hetzner/hetzner-dashboard/backend/lib/data/clusters/111949227/node-token.txt",
+    "created": 1761922443426
+  }
+}
