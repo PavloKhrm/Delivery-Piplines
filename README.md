@@ -1,11 +1,4 @@
 ### Prototype: Client Management Workflow
- Version Control
-
-| Date       | Version | Author | Description                                                                |
-| ---------- | ------- | ------ | -------------------------------------------------------------------------- |
-| 26.09.2025 | 0.1     | Bill   | Initial draft: basic workflow with Minikube, client create/update/suspend. |
-| 01.10.2025 | 0.2     | Bill   | Working instruction: switched to Kubernetes Kind, added detailed setup.    |
-
 ### Prerequisites
  - Docker Desktop for Windows: Must be installed and running.
  - KIND: Install KIND (the Chocolatey method is recommended: `choco install kind`).
