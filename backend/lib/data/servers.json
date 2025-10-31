@@ -1,0 +1,33 @@
+{
+  "111949227": {
+    "privateKeyFile": "/Users/m1stakesequence/Desktop/hetzner/hetzner-dashboard/backend/lib/keys/NewSigma-1761921838410.key",
+    "created": 1761921839419,
+    "name": "NewSigma",
+    "labels": {
+      "role": "control-plane"
+    },
+    "ip": "195.201.239.12"
+  },
+  "111950074": {
+    "privateKeyFile": "/Users/m1stakesequence/Desktop/hetzner/hetzner-dashboard/backend/lib/keys/lalala-node-1761922495332-1761922495333.key",
+    "created": 1761922496778,
+    "name": "lalala-node-1761922495332",
+    "labels": {
+      "role": "worker",
+      "client": "lalala",
+      "clusterId": "111949227"
+    },
+    "ip": "46.224.37.215"
+  },
+  "111950145": {
+    "privateKeyFile": "/Users/m1stakesequence/Desktop/hetzner/hetzner-dashboard/backend/lib/keys/lalalal-node-1761922553946-1761922553946.key",
+    "created": 1761922554929,
+    "name": "lalalal-node-1761922553946",
+    "labels": {
+      "role": "worker",
+      "client": "lalalal",
+      "clusterId": "111949227"
+    },
+    "ip": "46.224.12.183"
+  }
+}

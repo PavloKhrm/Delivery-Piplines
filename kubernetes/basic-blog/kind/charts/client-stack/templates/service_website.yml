@@ -1,0 +1,54 @@
+{{- if not .Values.suspended }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-website
+spec:
+  ports:
+    - { port: 80, targetPort: {{ .Values.website.port }} }
+  selector:
+    app: {{ .Release.Name }}-website
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-website
+spec:
+  replicas: {{ if .Values.suspended }}0{{ else }}1{{ end }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-website
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-website
+    spec:
+      containers:
+        - name: website
+          image: {{ .Values.website.image }}
+          ports: [ { containerPort: {{ .Values.website.port }} } ]
+          volumeMounts:
+            - { name: envfile, mountPath: /app/.env, subPath: .env }
+          resources:
+{{- toYaml .Values.resources.website | nindent 12 }}
+      volumes:
+        - name: envfile
+          secret:
+            secretName: {{ .Release.Name }}-envfile
+            items:
+              - { key: .env, path: .env }
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ .Release.Name }}-website
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`{{ .Values.clientId }}.{{ .Values.baseDomain }}`)
+      kind: Rule
+      services:
+        - name: {{ .Release.Name }}-website
+          port: 80
+{{- end }}

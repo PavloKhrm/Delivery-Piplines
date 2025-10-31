@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-mysql
+spec:
+  clusterIP: None
+  ports:
+    - { name: mysql, port: 3306, targetPort: 3306 }
+  selector:
+    app: {{ .Release.Name }}-mysql
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Release.Name }}-mysql
+spec:
+  serviceName: {{ .Release.Name }}-mysql
+  replicas: {{ if .Values.suspended }}0{{ else }}1{{ end }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-mysql
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.4.5
+          ports: [ { containerPort: 3306 } ]
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom: { secretKeyRef: { name: {{ .Release.Name }}-secrets, key: MYSQL_ROOT_PASSWORD } }
+            - name: MYSQL_DATABASE
+              valueFrom: { secretKeyRef: { name: {{ .Release.Name }}-secrets, key: MYSQL_DATABASE } }
+            - { name: TZ, value: "UTC" }
+          args:
+            - mysqld
+            - --character-set-server=utf8mb4
+            - --collation-server=utf8mb4_0900_ai_ci
+          resources:
+{{- toYaml .Values.resources.mysql | nindent 12 }}
+          volumeMounts:
+            - { name: data, mountPath: /var/lib/mysql }
+  volumeClaimTemplates:
+    - metadata: { name: data }
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        {{- if .Values.storageClassName }}
+        storageClassName: {{ .Values.storageClassName | quote }}
+        {{- end }}
+        resources:
+          requests: { storage: {{ .Values.persistence.mysql.size }} }
