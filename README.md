@@ -141,39 +141,6 @@ Bitbucket builds **two images** and pushes tags `latest` and a timestamped SHA t
   * `DOCKERHUB_USER` — Docker Hub namespace
   * `DOCKERHUB_TOKEN` — Docker Hub access token (write)
 
-Minimal pipeline (snippet):
-
-```yaml
-image: docker:24
-options: { docker: true }
-pipelines:
-  branches:
-    main:
-      - step:
-          name: Build & Push
-          services: [docker]
-          caches: [docker]
-          script:
-            - set -euo pipefail
-            - : "${DOCKERHUB_USER:?Missing}"
-            - : "${DOCKERHUB_TOKEN:?Missing}"
-            - echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USER" --password-stdin
-            - NS="$DOCKERHUB_USER"
-            - SHA_TAG="$(date +%Y%m%d%H%M%S)-$BITBUCKET_COMMIT"
-            - docker build -t ${NS}/client-api:latest -t ${NS}/client-api:${SHA_TAG} ./backend
-            - docker push ${NS}/client-api:latest
-            - docker push ${NS}/client-api:${SHA_TAG}
-            - docker build -t ${NS}/client-web:latest -t ${NS}/client-web:${SHA_TAG} ./frontend
-            - docker push ${NS}/client-web:latest
-            - docker push ${NS}/client-web:${SHA_TAG}
-```
-
-On Docker Hub, add a webhook to:
-
-```
-https://<your-panel-url>/api/hook/redeploy?token=<WEBHOOK_TOKEN>
-```
-
 ---
 
 ## TL;DR flow
