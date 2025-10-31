@@ -77,8 +77,110 @@ exit`
 
 📝 Notes
 
-Default phpmyadmin's username is root across all clients.
+# Hetzner K8s Dashboard — concise README
 
-Use helm uninstall to fully remove a client’s stack.
+**What it is.**
+A tiny control panel that spins up k3s control-planes and worker nodes on Hetzner Cloud, wires them together, and deploys a shared **client API + web** app per customer namespace. It also listens to **Docker Hub webhooks** to roll out new images across all client namespaces automatically.
 
-Always update the Version Control table when changing this file.
+---
+
+## High-level architecture
+
+* **Panel (this app)** — Node/Express server with a small UI. Runs locally (or anywhere) and talks to:
+
+  * **Hetzner Cloud API** for server lifecycle.
+  * **k3s control-planes** over SSH to apply YAML, label/taint nodes, and run `kubectl` operations.
+* **k3s** — 1× control-plane VM + N× client VMs (workers). Ingress NGINX installed on the control-plane.
+* **Tenancy model** — 1 namespace per client; deployments named `api` and `web`; labeled namespaces: `managed-by=dashboard`.
+* **CD path** — Bitbucket builds/pushes images to Docker Hub → Docker Hub webhook → Panel → `kubectl set image` + `rollout status`.
+
+---
+
+## What the panel exposes
+
+* Static UI at `/` to create clusters and clients.
+* REST:
+
+  * `GET /api/meta` – Hetzner types/locations/images.
+  * `GET /api/servers` – Known VMs (from local metadata).
+  * `GET /api/clusters` – Control-planes (id, IP).
+  * `GET /api/clients` – Client entries.
+  * `POST /api/cluster/create` – Create control-plane (k3s server + ingress install).
+  * `POST /api/client/create` – Create worker, join it, label/taint, and deploy per-client API/Web.
+  * `POST /api/hook/redeploy?token=…` – Roll out images to all client namespaces.
+* WS terminal bridge to servers (simple SSH over websockets).
+
+Auth to the panel uses **Basic Auth** via env (`PANEL_USER`/`PANEL_PASS`).
+
+---
+
+## Expected container images
+
+* **API:** `docker.io/<ns>/client-api:<tag>`
+* **Web:** `docker.io/<ns>/client-web:<tag>`
+
+Default for new clients comes from `DEFAULT_API_IMAGE` and `DEFAULT_WEB_IMAGE` (typically `:latest`). Ingress is **path-based**:
+
+
+## Webhook contract
+
+* **Docker Hub (automated):** When `client-api` or `client-web` is pushed, Docker Hub sends its standard JSON. The panel updates remembered tags and rolls out.
+
+## Environment
+
+Create a `.env` alongside the backend with help of env.example
+
+---
+
+## CI/CD (Bitbucket + Docker Hub)
+
+Bitbucket builds **two images** and pushes tags `latest` and a timestamped SHA tag. Only **Docker Hub** needs to be told to call the panel’s webhook:
+
+* Bitbucket repository variables:
+
+  * `DOCKERHUB_USER` — Docker Hub namespace
+  * `DOCKERHUB_TOKEN` — Docker Hub access token (write)
+
+Minimal pipeline (snippet):
+
+```yaml
+image: docker:24
+options: { docker: true }
+pipelines:
+  branches:
+    main:
+      - step:
+          name: Build & Push
+          services: [docker]
+          caches: [docker]
+          script:
+            - set -euo pipefail
+            - : "${DOCKERHUB_USER:?Missing}"
+            - : "${DOCKERHUB_TOKEN:?Missing}"
+            - echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USER" --password-stdin
+            - NS="$DOCKERHUB_USER"
+            - SHA_TAG="$(date +%Y%m%d%H%M%S)-$BITBUCKET_COMMIT"
+            - docker build -t ${NS}/client-api:latest -t ${NS}/client-api:${SHA_TAG} ./backend
+            - docker push ${NS}/client-api:latest
+            - docker push ${NS}/client-api:${SHA_TAG}
+            - docker build -t ${NS}/client-web:latest -t ${NS}/client-web:${SHA_TAG} ./frontend
+            - docker push ${NS}/client-web:latest
+            - docker push ${NS}/client-web:${SHA_TAG}
+```
+
+On Docker Hub, add a webhook to:
+
+```
+https://<your-panel-url>/api/hook/redeploy?token=<WEBHOOK_TOKEN>
+```
+
+---
+
+## TL;DR flow
+
+1. IT pushes to `main` → Bitbucket builds `client-api` + `client-web` → pushes to Docker Hub.
+2. Docker Hub webhook hits `/api/hook/redeploy?token=…`.
+3. Panel SSHes into each control-plane, runs `kubectl set image` + `rollout status` for every `managed-by=dashboard` namespace.
+4. Clients get the new containers with zero panel restarts or manual SSH.
+
+That’s the whole loop.
